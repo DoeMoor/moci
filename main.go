@@ -1,15 +1,13 @@
 package main
 
 import (
-	// "database/sql"
 	"log"
 	"os"
-	"os/exec"
-	"runtime"
 
-	// "github.com/doemoor/moci/api"
+	"github.com/doemoor/moci/internal/utility"
+  "github.com/doemoor/moci/api"
 	"github.com/gofiber/fiber/v2"
-  "github.com/joho/godotenv"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -31,37 +29,27 @@ func main() {
   if serverHost == "" ||
    serverPort == "" ||
    serverReadTimeout == "" {
-    log.Println("SERVER_HOST or SERVER_PORT or SERVER_READ_TIMEOUT are not set", serverHost, serverPort, serverReadTimeout)
+    log.Printf("SERVER_HOST or SERVER_PORT or SERVER_READ_TIMEOUT are not set:\n"+
+        "SERVER_HOST: %s\n"+
+        "SERVER_PORT: %s\n"+
+        "SERVER_READ_TIMEOUT: %s\n", serverHost, serverPort, serverReadTimeout)
   }
-
-
-	// db, err := sql.Open("postgres", dbString)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	os.Exit(1)
-	// }
 
 	app := fiber.New(fiber.Config{
     ServerHeader: "Moduline Controller Inventory",
+    AppName: "Moduline Controller Inventory",
 	})
 
   app.Static("/", "./app")
 
-  app.Get("/", func(c *fiber.Ctx) error {
-    return c.SendString("Hello, World!")
-  })
-
-	clearTerminal()
+  app.Get("/api/controllers", api.GetAllControllers)
+  app.Get("/api/controllers/:id", api.GetControllerById)
+  
+  app.Get("/api/iomodules", api.GetAllIoModules)
+  app.Get("/api/iomodules/:id", api.GetIoModuleById)
+  
+  utility.ClearTerminal()
 	log.Fatal(app.Listen(serverHost + ":" + serverPort))
 }
 
-func clearTerminal() {
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", "cls")
-	} else {
-		cmd = exec.Command("clear")
-	}
-	cmd.Stdout = os.Stdout
-	cmd.Run()
-}
+
