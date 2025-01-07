@@ -12,14 +12,14 @@ import (
 )
 
 type CanTerminationConf struct {
-	ID        uuid.UUID    `json:"id"`
-	Can1      sql.NullBool `json:"can_1"`
-	Can2      sql.NullBool `json:"can_2"`
-	Can3      sql.NullBool `json:"can_3"`
-	Can4      sql.NullBool `json:"can_4"`
-	CreatedAt sql.NullTime `json:"created_at"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
-	IsDeleted sql.NullBool `json:"is_deleted"`
+	ID             uuid.UUID    `json:"id"`
+	Can1Terminated sql.NullBool `json:"can_1_terminated"`
+	Can3Terminated sql.NullBool `json:"can_3_terminated"`
+	Can2Terminated sql.NullBool `json:"can_2_terminated"`
+	Can4Terminated sql.NullBool `json:"can_4_terminated"`
+	CreatedAt      sql.NullTime `json:"created_at"`
+	UpdatedAt      sql.NullTime `json:"updated_at"`
+	IsDeleted      sql.NullBool `json:"is_deleted"`
 }
 
 type Controller struct {
@@ -82,13 +82,12 @@ type ControllerNote struct {
 }
 
 type ControllerPcbHwVersion struct {
-	ID                 uuid.UUID      `json:"id"`
-	VersionNumber      sql.NullString `json:"version_number"`
-	Revision           sql.NullString `json:"revision"`
-	AmountOfConnectors sql.NullInt32  `json:"amount_of_connectors"`
-	CreatedAt          sql.NullTime   `json:"created_at"`
-	UpdatedAt          sql.NullTime   `json:"updated_at"`
-	IsDeleted          sql.NullBool   `json:"is_deleted"`
+	ID            uuid.UUID      `json:"id"`
+	VersionNumber sql.NullString `json:"version_number"`
+	Revision      sql.NullString `json:"revision"`
+	CreatedAt     sql.NullTime   `json:"created_at"`
+	UpdatedAt     sql.NullTime   `json:"updated_at"`
+	IsDeleted     sql.NullBool   `json:"is_deleted"`
 }
 
 type ControllerPcbHwVersionsRev struct {
@@ -104,19 +103,14 @@ type ControllerSlot struct {
 }
 
 type ControllerType struct {
-	ID                 uuid.UUID      `json:"id"`
-	Name               sql.NullString `json:"name"`
-	IoModuleSlotAmount sql.NullInt32  `json:"io_module_slot_amount"`
-	CreatedAt          sql.NullTime   `json:"created_at"`
-	UpdatedAt          sql.NullTime   `json:"updated_at"`
-	IsDeleted          sql.NullBool   `json:"is_deleted"`
-}
-
-type ControllersPinout struct {
-	ControllerTypeID                uuid.UUID             `json:"controller_type_id"`
-	ControllerPcbHwVersionsNumber   string                `json:"controller_pcb_hw_versions_number"`
-	ControllerPcbHwVersionsRevision string                `json:"controller_pcb_hw_versions_revision"`
-	SlotPinoutJson                  pqtype.NullRawMessage `json:"slot_pinout_json"`
+	ID                 uuid.UUID             `json:"id"`
+	Name               sql.NullString        `json:"name"`
+	IoModuleSlotAmount sql.NullInt32         `json:"io_module_slot_amount"`
+	AmountOfConnectors sql.NullInt32         `json:"amount_of_connectors"`
+	SlotPinoutJson     pqtype.NullRawMessage `json:"slot_pinout_json"`
+	CreatedAt          sql.NullTime          `json:"created_at"`
+	UpdatedAt          sql.NullTime          `json:"updated_at"`
+	IsDeleted          sql.NullBool          `json:"is_deleted"`
 }
 
 type Customer struct {
@@ -150,6 +144,13 @@ type DisplayAdapter struct {
 	CreatedAt          sql.NullTime   `json:"created_at"`
 	UpdatedAt          sql.NullTime   `json:"updated_at"`
 	IsDeleted          sql.NullBool   `json:"is_deleted"`
+}
+
+type Enclosure struct {
+	ID                uuid.UUID      `json:"id"`
+	SerialNumber      sql.NullString `json:"serial_number"`
+	ControllerTypesID uuid.NullUUID  `json:"controller_types_id"`
+	ManufacturersID   uuid.NullUUID  `json:"manufacturers_id"`
 }
 
 type IoModule struct {

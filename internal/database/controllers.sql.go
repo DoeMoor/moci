@@ -20,10 +20,7 @@ SELECT
   ct.io_module_slot_amount AS io_module_socket_amount,
   p.name AS project_name,
   c.description,
-  concat(
-    pcbv.version_number,
-    pcbrev.revision
-  ) AS pcb_hw_version,
+  concat(pcbv.version_number, pcbrev.revision) AS pcb_hw_version,
   c.pcb_version_number,
   c.serial_number,
   m.name AS manufacturer_name,
@@ -34,13 +31,14 @@ SELECT
   mpcie.serial_number AS mini_pcie_serial_number,
   m2t.name AS m2_module_name,
   m2t.module_type_number AS m2_module_type_number,
+  ldb.manufacturer_qr_code as LED_board,
   c.display_adapters_id,
   c.article_number,
   c.qr_code,
-  ctc.can_1,
-  ctc.can_2,
-  ctc.can_3,
-  ctc.can_4,
+  ctc.can_1_terminated,
+  ctc.can_2_terminated,
+  ctc.can_3_terminated,
+  ctc.can_4_terminated,
   c.usb,
   c.serial,
   c.manufacturer_qr_code,
@@ -48,7 +46,7 @@ SELECT
   c.created_at,
   c.updated_at,
   c.is_deleted,
-  cp.slot_pinout_json AS slots_pinout_json
+  ct.slot_pinout_json as slot_pinout_json
 FROM
   controllers c
   LEFT JOIN controller_types ct ON c.controller_types_id = ct.id
@@ -60,10 +58,7 @@ FROM
   LEFT JOIN can_termination_confs ctc ON c.can_termination_confs_id = ctc.id
   LEFT JOIN controller_pcb_hw_versions_rev pcbrev ON pcbv.revision = pcbrev.revision
   LEFT JOIN mini_pcie_modules_type mpt ON mpcie.mini_pcie_modules_type_id = mpt.id
-  LEFT JOIN controllers_pinout cp 
-    ON ct.id = cp.controller_type_id 
-    AND pcbv.version_number = cp.controller_pcb_hw_versions_number 
-    AND COALESCE(pcbrev.revision, '') = cp.controller_pcb_hw_versions_revision
+  left join led_daughter_board ldb on c.id = ldb.controllers_id
 `
 
 type GetAllControllersRow struct {
@@ -83,13 +78,14 @@ type GetAllControllersRow struct {
 	MiniPcieSerialNumber sql.NullString        `json:"mini_pcie_serial_number"`
 	M2ModuleName         sql.NullString        `json:"m2_module_name"`
 	M2ModuleTypeNumber   sql.NullInt32         `json:"m2_module_type_number"`
+	LedBoard             sql.NullString        `json:"led_board"`
 	DisplayAdaptersID    uuid.NullUUID         `json:"display_adapters_id"`
 	ArticleNumber        sql.NullString        `json:"article_number"`
 	QrCode               sql.NullString        `json:"qr_code"`
-	Can1                 sql.NullBool          `json:"can_1"`
-	Can2                 sql.NullBool          `json:"can_2"`
-	Can3                 sql.NullBool          `json:"can_3"`
-	Can4                 sql.NullBool          `json:"can_4"`
+	Can1Terminated       sql.NullBool          `json:"can_1_terminated"`
+	Can2Terminated       sql.NullBool          `json:"can_2_terminated"`
+	Can3Terminated       sql.NullBool          `json:"can_3_terminated"`
+	Can4Terminated       sql.NullBool          `json:"can_4_terminated"`
 	Usb                  sql.NullBool          `json:"usb"`
 	Serial               sql.NullBool          `json:"serial"`
 	ManufacturerQrCode   sql.NullString        `json:"manufacturer_qr_code"`
@@ -97,7 +93,7 @@ type GetAllControllersRow struct {
 	CreatedAt            sql.NullTime          `json:"created_at"`
 	UpdatedAt            sql.NullTime          `json:"updated_at"`
 	IsDeleted            sql.NullBool          `json:"is_deleted"`
-	SlotsPinoutJson      pqtype.NullRawMessage `json:"slots_pinout_json"`
+	SlotPinoutJson       pqtype.NullRawMessage `json:"slot_pinout_json"`
 }
 
 func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow, error) {
@@ -126,13 +122,14 @@ func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow
 			&i.MiniPcieSerialNumber,
 			&i.M2ModuleName,
 			&i.M2ModuleTypeNumber,
+			&i.LedBoard,
 			&i.DisplayAdaptersID,
 			&i.ArticleNumber,
 			&i.QrCode,
-			&i.Can1,
-			&i.Can2,
-			&i.Can3,
-			&i.Can4,
+			&i.Can1Terminated,
+			&i.Can2Terminated,
+			&i.Can3Terminated,
+			&i.Can4Terminated,
 			&i.Usb,
 			&i.Serial,
 			&i.ManufacturerQrCode,
@@ -140,7 +137,7 @@ func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.IsDeleted,
-			&i.SlotsPinoutJson,
+			&i.SlotPinoutJson,
 		); err != nil {
 			return nil, err
 		}
@@ -162,10 +159,7 @@ SELECT
   ct.io_module_slot_amount AS io_module_socket_amount,
   p.name AS project_name,
   c.description,
-  concat(
-    pcbv.version_number,
-    pcbrev.revision
-  ) AS pcb_hw_version,
+  concat(pcbv.version_number, pcbrev.revision) AS pcb_hw_version,
   c.pcb_version_number,
   c.serial_number,
   m.name AS manufacturer_name,
@@ -176,13 +170,14 @@ SELECT
   mpcie.serial_number AS mini_pcie_serial_number,
   m2t.name AS m2_module_name,
   m2t.module_type_number AS m2_module_type_number,
+  ldb.manufacturer_qr_code as LED_board,
   c.display_adapters_id,
   c.article_number,
   c.qr_code,
-  ctc.can_1,
-  ctc.can_2,
-  ctc.can_3,
-  ctc.can_4,
+  ctc.can_1_terminated,
+  ctc.can_2_terminated,
+  ctc.can_3_terminated,
+  ctc.can_4_terminated,
   c.usb,
   c.serial,
   c.manufacturer_qr_code,
@@ -190,7 +185,7 @@ SELECT
   c.created_at,
   c.updated_at,
   c.is_deleted,
-  cp.slot_pinout_json AS slots_pinout_json
+  ct.slot_pinout_json as slot_pinout_json
 FROM
   controllers c
   LEFT JOIN controller_types ct ON c.controller_types_id = ct.id
@@ -202,10 +197,7 @@ FROM
   LEFT JOIN can_termination_confs ctc ON c.can_termination_confs_id = ctc.id
   LEFT JOIN controller_pcb_hw_versions_rev pcbrev ON pcbv.revision = pcbrev.revision
   LEFT JOIN mini_pcie_modules_type mpt ON mpcie.mini_pcie_modules_type_id = mpt.id
-  LEFT JOIN controllers_pinout cp 
-    ON ct.id = cp.controller_type_id 
-    AND pcbv.version_number = cp.controller_pcb_hw_versions_number 
-    AND COALESCE(pcbrev.revision, '') = cp.controller_pcb_hw_versions_revision
+  left join led_daughter_board ldb on c.id = ldb.controllers_id
 WHERE
   c.id = $1
 `
@@ -227,13 +219,14 @@ type GetControllerByIdRow struct {
 	MiniPcieSerialNumber sql.NullString        `json:"mini_pcie_serial_number"`
 	M2ModuleName         sql.NullString        `json:"m2_module_name"`
 	M2ModuleTypeNumber   sql.NullInt32         `json:"m2_module_type_number"`
+	LedBoard             sql.NullString        `json:"led_board"`
 	DisplayAdaptersID    uuid.NullUUID         `json:"display_adapters_id"`
 	ArticleNumber        sql.NullString        `json:"article_number"`
 	QrCode               sql.NullString        `json:"qr_code"`
-	Can1                 sql.NullBool          `json:"can_1"`
-	Can2                 sql.NullBool          `json:"can_2"`
-	Can3                 sql.NullBool          `json:"can_3"`
-	Can4                 sql.NullBool          `json:"can_4"`
+	Can1Terminated       sql.NullBool          `json:"can_1_terminated"`
+	Can2Terminated       sql.NullBool          `json:"can_2_terminated"`
+	Can3Terminated       sql.NullBool          `json:"can_3_terminated"`
+	Can4Terminated       sql.NullBool          `json:"can_4_terminated"`
 	Usb                  sql.NullBool          `json:"usb"`
 	Serial               sql.NullBool          `json:"serial"`
 	ManufacturerQrCode   sql.NullString        `json:"manufacturer_qr_code"`
@@ -241,7 +234,7 @@ type GetControllerByIdRow struct {
 	CreatedAt            sql.NullTime          `json:"created_at"`
 	UpdatedAt            sql.NullTime          `json:"updated_at"`
 	IsDeleted            sql.NullBool          `json:"is_deleted"`
-	SlotsPinoutJson      pqtype.NullRawMessage `json:"slots_pinout_json"`
+	SlotPinoutJson       pqtype.NullRawMessage `json:"slot_pinout_json"`
 }
 
 func (q *Queries) GetControllerById(ctx context.Context, id uuid.UUID) (GetControllerByIdRow, error) {
@@ -264,13 +257,14 @@ func (q *Queries) GetControllerById(ctx context.Context, id uuid.UUID) (GetContr
 		&i.MiniPcieSerialNumber,
 		&i.M2ModuleName,
 		&i.M2ModuleTypeNumber,
+		&i.LedBoard,
 		&i.DisplayAdaptersID,
 		&i.ArticleNumber,
 		&i.QrCode,
-		&i.Can1,
-		&i.Can2,
-		&i.Can3,
-		&i.Can4,
+		&i.Can1Terminated,
+		&i.Can2Terminated,
+		&i.Can3Terminated,
+		&i.Can4Terminated,
 		&i.Usb,
 		&i.Serial,
 		&i.ManufacturerQrCode,
@@ -278,7 +272,7 @@ func (q *Queries) GetControllerById(ctx context.Context, id uuid.UUID) (GetContr
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.IsDeleted,
-		&i.SlotsPinoutJson,
+		&i.SlotPinoutJson,
 	)
 	return i, err
 }

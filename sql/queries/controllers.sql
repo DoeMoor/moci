@@ -5,10 +5,7 @@ SELECT
   ct.io_module_slot_amount AS io_module_socket_amount,
   p.name AS project_name,
   c.description,
-  concat(
-    pcbv.version_number,
-    pcbrev.revision
-  ) AS pcb_hw_version,
+  concat(pcbv.version_number, pcbrev.revision) AS pcb_hw_version,
   c.pcb_version_number,
   c.serial_number,
   m.name AS manufacturer_name,
@@ -19,13 +16,14 @@ SELECT
   mpcie.serial_number AS mini_pcie_serial_number,
   m2t.name AS m2_module_name,
   m2t.module_type_number AS m2_module_type_number,
+  ldb.manufacturer_qr_code as LED_board,
   c.display_adapters_id,
   c.article_number,
   c.qr_code,
-  ctc.can_1,
-  ctc.can_2,
-  ctc.can_3,
-  ctc.can_4,
+  ctc.can_1_terminated,
+  ctc.can_2_terminated,
+  ctc.can_3_terminated,
+  ctc.can_4_terminated,
   c.usb,
   c.serial,
   c.manufacturer_qr_code,
@@ -33,7 +31,7 @@ SELECT
   c.created_at,
   c.updated_at,
   c.is_deleted,
-  cp.slot_pinout_json AS slots_pinout_json
+  ct.slot_pinout_json as slot_pinout_json
 FROM
   controllers c
   LEFT JOIN controller_types ct ON c.controller_types_id = ct.id
@@ -45,10 +43,7 @@ FROM
   LEFT JOIN can_termination_confs ctc ON c.can_termination_confs_id = ctc.id
   LEFT JOIN controller_pcb_hw_versions_rev pcbrev ON pcbv.revision = pcbrev.revision
   LEFT JOIN mini_pcie_modules_type mpt ON mpcie.mini_pcie_modules_type_id = mpt.id
-  LEFT JOIN controllers_pinout cp 
-    ON ct.id = cp.controller_type_id 
-    AND pcbv.version_number = cp.controller_pcb_hw_versions_number 
-    AND COALESCE(pcbrev.revision, '') = cp.controller_pcb_hw_versions_revision;
+  left join led_daughter_board ldb on c.id = ldb.controllers_id;
 
 -- name: GetControllerById :one
 SELECT
@@ -57,10 +52,7 @@ SELECT
   ct.io_module_slot_amount AS io_module_socket_amount,
   p.name AS project_name,
   c.description,
-  concat(
-    pcbv.version_number,
-    pcbrev.revision
-  ) AS pcb_hw_version,
+  concat(pcbv.version_number, pcbrev.revision) AS pcb_hw_version,
   c.pcb_version_number,
   c.serial_number,
   m.name AS manufacturer_name,
@@ -71,13 +63,14 @@ SELECT
   mpcie.serial_number AS mini_pcie_serial_number,
   m2t.name AS m2_module_name,
   m2t.module_type_number AS m2_module_type_number,
+  ldb.manufacturer_qr_code as LED_board,
   c.display_adapters_id,
   c.article_number,
   c.qr_code,
-  ctc.can_1,
-  ctc.can_2,
-  ctc.can_3,
-  ctc.can_4,
+  ctc.can_1_terminated,
+  ctc.can_2_terminated,
+  ctc.can_3_terminated,
+  ctc.can_4_terminated,
   c.usb,
   c.serial,
   c.manufacturer_qr_code,
@@ -85,7 +78,7 @@ SELECT
   c.created_at,
   c.updated_at,
   c.is_deleted,
-  cp.slot_pinout_json AS slots_pinout_json
+  ct.slot_pinout_json as slot_pinout_json
 FROM
   controllers c
   LEFT JOIN controller_types ct ON c.controller_types_id = ct.id
@@ -97,9 +90,6 @@ FROM
   LEFT JOIN can_termination_confs ctc ON c.can_termination_confs_id = ctc.id
   LEFT JOIN controller_pcb_hw_versions_rev pcbrev ON pcbv.revision = pcbrev.revision
   LEFT JOIN mini_pcie_modules_type mpt ON mpcie.mini_pcie_modules_type_id = mpt.id
-  LEFT JOIN controllers_pinout cp 
-    ON ct.id = cp.controller_type_id 
-    AND pcbv.version_number = cp.controller_pcb_hw_versions_number 
-    AND COALESCE(pcbrev.revision, '') = cp.controller_pcb_hw_versions_revision
+  left join led_daughter_board ldb on c.id = ldb.controllers_id
 WHERE
   c.id = $1;

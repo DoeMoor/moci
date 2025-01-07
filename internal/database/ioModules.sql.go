@@ -13,8 +13,8 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
-const getAllIoModules = `-- name: getAllIoModules :many
-SELECT 
+const getAllIoModules = `-- name: GetAllIoModules :many
+SELECT
 	io.id,
 	iomt.module_type_name,
 	iomt.module_type_number,
@@ -24,20 +24,20 @@ SELECT
 	io.order_id,
 	iohw.hw_version,
 	orders.invoice_number,
-	customers."name",
+	customers."name" as "customer name",
 	conts.controllers_id,
 	conts.slot_number as "controller slot number",
 	iomt.pinout_json
-FROM 
+FROM
 	io_modules io
-LEFT join io_module_types iomt ON iomt.id = io.io_module_types_id
-LEFT join io_module_hw_versions iohw ON iohw.id = io.io_module_hw_versions_id
-LEFT join orders on orders.id = io.order_id
-LEFT join customers ON customers.id = orders.customers_id
-LEFT join controller_slot conts ON conts.io_modules_id = io.id
+	LEFT join io_module_types iomt ON iomt.id = io.io_module_types_id
+	LEFT join io_module_hw_versions iohw ON iohw.id = io.io_module_hw_versions_id
+	LEFT join orders on orders.id = io.order_id
+	LEFT join customers ON customers.id = orders.customers_id
+	LEFT join controller_slot conts ON conts.io_modules_id = io.id
 `
 
-type getAllIoModulesRow struct {
+type GetAllIoModulesRow struct {
 	ID                       uuid.UUID             `json:"id"`
 	ModuleTypeName           sql.NullString        `json:"module_type_name"`
 	ModuleTypeNumber         sql.NullInt32         `json:"module_type_number"`
@@ -47,21 +47,21 @@ type getAllIoModulesRow struct {
 	OrderID                  uuid.NullUUID         `json:"order_id"`
 	HwVersion                sql.NullInt32         `json:"hw_version"`
 	InvoiceNumber            sql.NullString        `json:"invoice_number"`
-	Name                     sql.NullString        `json:"name"`
+	CustomerName             sql.NullString        `json:"customer name"`
 	ControllersID            uuid.NullUUID         `json:"controllers_id"`
 	ControllerSlotNumber     sql.NullInt32         `json:"controller slot number"`
 	PinoutJson               pqtype.NullRawMessage `json:"pinout_json"`
 }
 
-func (q *Queries) getAllIoModules(ctx context.Context) ([]getAllIoModulesRow, error) {
+func (q *Queries) GetAllIoModules(ctx context.Context) ([]GetAllIoModulesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllIoModules)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []getAllIoModulesRow
+	var items []GetAllIoModulesRow
 	for rows.Next() {
-		var i getAllIoModulesRow
+		var i GetAllIoModulesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ModuleTypeName,
@@ -72,7 +72,7 @@ func (q *Queries) getAllIoModules(ctx context.Context) ([]getAllIoModulesRow, er
 			&i.OrderID,
 			&i.HwVersion,
 			&i.InvoiceNumber,
-			&i.Name,
+			&i.CustomerName,
 			&i.ControllersID,
 			&i.ControllerSlotNumber,
 			&i.PinoutJson,
@@ -90,8 +90,8 @@ func (q *Queries) getAllIoModules(ctx context.Context) ([]getAllIoModulesRow, er
 	return items, nil
 }
 
-const getIoModuleById = `-- name: getIoModuleById :one
-SELECT 
+const getIoModuleById = `-- name: GetIoModuleById :one
+SELECT
 	io.id,
 	iomt.module_type_name,
 	iomt.module_type_number,
@@ -101,21 +101,22 @@ SELECT
 	io.order_id,
 	iohw.hw_version,
 	orders.invoice_number,
-	customers."name",
+	customers."name" as "customer name",
 	conts.controllers_id,
 	conts.slot_number as "controller slot number",
 	iomt.pinout_json
-FROM 
+FROM
 	io_modules io
-LEFT join io_module_types iomt ON iomt.id = io.io_module_types_id
-LEFT join io_module_hw_versions iohw ON iohw.id = io.io_module_hw_versions_id
-LEFT join orders on orders.id = io.order_id
-LEFT join customers ON customers.id = orders.customers_id
-LEFT join controller_slot conts ON conts.io_modules_id = io.id
-WHERE io.id = $1
+	LEFT join io_module_types iomt ON iomt.id = io.io_module_types_id
+	LEFT join io_module_hw_versions iohw ON iohw.id = io.io_module_hw_versions_id
+	LEFT join orders on orders.id = io.order_id
+	LEFT join customers ON customers.id = orders.customers_id
+	LEFT join controller_slot conts ON conts.io_modules_id = io.id
+WHERE
+	io.id = $1
 `
 
-type getIoModuleByIdRow struct {
+type GetIoModuleByIdRow struct {
 	ID                       uuid.UUID             `json:"id"`
 	ModuleTypeName           sql.NullString        `json:"module_type_name"`
 	ModuleTypeNumber         sql.NullInt32         `json:"module_type_number"`
@@ -125,15 +126,15 @@ type getIoModuleByIdRow struct {
 	OrderID                  uuid.NullUUID         `json:"order_id"`
 	HwVersion                sql.NullInt32         `json:"hw_version"`
 	InvoiceNumber            sql.NullString        `json:"invoice_number"`
-	Name                     sql.NullString        `json:"name"`
+	CustomerName             sql.NullString        `json:"customer name"`
 	ControllersID            uuid.NullUUID         `json:"controllers_id"`
 	ControllerSlotNumber     sql.NullInt32         `json:"controller slot number"`
 	PinoutJson               pqtype.NullRawMessage `json:"pinout_json"`
 }
 
-func (q *Queries) getIoModuleById(ctx context.Context, id uuid.UUID) (getIoModuleByIdRow, error) {
+func (q *Queries) GetIoModuleById(ctx context.Context, id uuid.UUID) (GetIoModuleByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getIoModuleById, id)
-	var i getIoModuleByIdRow
+	var i GetIoModuleByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.ModuleTypeName,
@@ -144,7 +145,7 @@ func (q *Queries) getIoModuleById(ctx context.Context, id uuid.UUID) (getIoModul
 		&i.OrderID,
 		&i.HwVersion,
 		&i.InvoiceNumber,
-		&i.Name,
+		&i.CustomerName,
 		&i.ControllersID,
 		&i.ControllerSlotNumber,
 		&i.PinoutJson,
