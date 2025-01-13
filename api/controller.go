@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	// "github.com/doemoor/moci/internal/database"
+	"github.com/doemoor/moci/internal/database"
 )
 
 func (cnf *ApiConfig) GetAllControllers(c *fiber.Ctx) error {
@@ -46,4 +46,29 @@ func (cnf *ApiConfig) GetControllerById(c *fiber.Ctx) error {
 		return err
 	}
 	return c.JSON(controllerById)
+}
+
+func (cnf *ApiConfig) GetAllControllerTypes(c *fiber.Ctx) error {
+	type controllerTypesForJson struct {
+		Id   uuid.UUID `json:"id"`
+		Name string    `json:"name"`
+	}
+
+	var controllerTypes []database.GetALLControllerTypesRow
+
+	controllerTypes, err := cnf.DbQueries.GetALLControllerTypes(c.Context())
+	if err != nil {
+		c.Response().SetStatusCode(500)
+		log.Println(err)
+		return err
+	}	
+	var result []controllerTypesForJson
+	for _, controllerType := range controllerTypes {		
+		result = append(result, controllerTypesForJson{
+			Id:   controllerType.ID,
+			Name: controllerType.Name.String,
+		})
+	}
+
+	return c.JSON(result)
 }

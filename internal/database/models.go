@@ -138,12 +138,19 @@ type CustomerProjectsJunction struct {
 }
 
 type DisplayAdapter struct {
-	ID                 uuid.UUID      `json:"id"`
-	Name               sql.NullString `json:"name"`
-	ManufacturerQrCode sql.NullString `json:"manufacturer_qr_code"`
-	CreatedAt          sql.NullTime   `json:"created_at"`
-	UpdatedAt          sql.NullTime   `json:"updated_at"`
-	IsDeleted          sql.NullBool   `json:"is_deleted"`
+	ID                      uuid.UUID      `json:"id"`
+	DisplayAdaptersTypeName sql.NullString `json:"display_adapters_type_name"`
+	ManufacturerQrCode      sql.NullString `json:"manufacturer_qr_code"`
+	CreatedAt               sql.NullTime   `json:"created_at"`
+	UpdatedAt               sql.NullTime   `json:"updated_at"`
+	IsDeleted               sql.NullBool   `json:"is_deleted"`
+}
+
+type DisplayAdaptersType struct {
+	Name      string       `json:"name"`
+	CreatedAt sql.NullTime `json:"created_at"`
+	UpdatedAt sql.NullTime `json:"updated_at"`
+	IsDeleted sql.NullBool `json:"is_deleted"`
 }
 
 type Enclosure struct {
@@ -229,11 +236,12 @@ type MiniPcieModule struct {
 }
 
 type MiniPcieModulesType struct {
-	ID        uuid.UUID      `json:"id"`
-	Name      sql.NullString `json:"name"`
-	CreatedAt sql.NullTime   `json:"created_at"`
-	UpdatedAt sql.NullTime   `json:"updated_at"`
-	IsDeleted sql.NullBool   `json:"is_deleted"`
+	ID               uuid.UUID      `json:"id"`
+	Name             sql.NullString `json:"name"`
+	ModuleTypeNumber sql.NullInt32  `json:"module_type_number"`
+	CreatedAt        sql.NullTime   `json:"created_at"`
+	UpdatedAt        sql.NullTime   `json:"updated_at"`
+	IsDeleted        sql.NullBool   `json:"is_deleted"`
 }
 
 type Order struct {

@@ -64,10 +64,25 @@ func main() {
 	app.Static("/", "./app")
 
 	app.Get("/api/controllers", apiConf.GetAllControllers)
+	app.Get("/api/controllers/types", apiConf.GetAllControllerTypes)
 	app.Get("/api/controllers/:id", apiConf.GetControllerById)
+	
 
 	app.Get("/api/iomodules", apiConf.GetAllIoModules)
 	app.Get("/api/iomodules/:id", apiConf.GetIoModuleById)
+
+	app.Get("/api/manufacturers", apiConf.GetAllManufacturers)
+	app.Get("/api/manufacturers/:id", apiConf.GetManufacturerById)
+	app.Post("/api/manufacturers", apiConf.CreateManufacturer)
+
+	// app.Get("/api/miniPcieModules", apiConf.GetAllMiniPCeModules)
+	app.Get("/api/miniPcieModules/types", apiConf.GetAllMiniPCeModulesType)
+	// app.Get("/api/miniPcieModules/:id", apiConf.GetMiniPCeModuleById)
+	// app.Post("/api/miniPcieModules", apiConf.CreateMiniPCeModule)
+	
+	
+
+
 
 	utility.ClearTerminal()
 	log.Fatal(app.Listen(serverHost + ":" + serverPort))

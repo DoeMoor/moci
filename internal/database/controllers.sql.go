@@ -13,6 +13,39 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const getALLControllerTypes = `-- name: GetALLControllerTypes :many
+SELECT id,controller_types.name
+FROM controller_types
+`
+
+type GetALLControllerTypesRow struct {
+	ID   uuid.UUID      `json:"id"`
+	Name sql.NullString `json:"name"`
+}
+
+func (q *Queries) GetALLControllerTypes(ctx context.Context) ([]GetALLControllerTypesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getALLControllerTypes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetALLControllerTypesRow
+	for rows.Next() {
+		var i GetALLControllerTypesRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllControllers = `-- name: GetAllControllers :many
 SELECT
   c.id,
@@ -29,8 +62,7 @@ SELECT
   c.sim_number,
   mpt.name AS mini_pcie_modules_name,
   mpcie.serial_number AS mini_pcie_serial_number,
-  m2t.name AS m2_module_name,
-  m2t.module_type_number AS m2_module_type_number,
+  concat(m2t.name, ' ', m2t.module_type_number) AS m2_module,
   ldb.manufacturer_qr_code as LED_board,
   c.display_adapters_id,
   c.article_number,
@@ -76,8 +108,7 @@ type GetAllControllersRow struct {
 	SimNumber            sql.NullString        `json:"sim_number"`
 	MiniPcieModulesName  sql.NullString        `json:"mini_pcie_modules_name"`
 	MiniPcieSerialNumber sql.NullString        `json:"mini_pcie_serial_number"`
-	M2ModuleName         sql.NullString        `json:"m2_module_name"`
-	M2ModuleTypeNumber   sql.NullInt32         `json:"m2_module_type_number"`
+	M2Module             interface{}           `json:"m2_module"`
 	LedBoard             sql.NullString        `json:"led_board"`
 	DisplayAdaptersID    uuid.NullUUID         `json:"display_adapters_id"`
 	ArticleNumber        sql.NullString        `json:"article_number"`
@@ -120,8 +151,7 @@ func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow
 			&i.SimNumber,
 			&i.MiniPcieModulesName,
 			&i.MiniPcieSerialNumber,
-			&i.M2ModuleName,
-			&i.M2ModuleTypeNumber,
+			&i.M2Module,
 			&i.LedBoard,
 			&i.DisplayAdaptersID,
 			&i.ArticleNumber,

@@ -14,8 +14,7 @@ SELECT
   c.sim_number,
   mpt.name AS mini_pcie_modules_name,
   mpcie.serial_number AS mini_pcie_serial_number,
-  m2t.name AS m2_module_name,
-  m2t.module_type_number AS m2_module_type_number,
+  concat(m2t.name, ' ', m2t.module_type_number) AS m2_module,
   ldb.manufacturer_qr_code as LED_board,
   c.display_adapters_id,
   c.article_number,
@@ -93,3 +92,7 @@ FROM
   left join led_daughter_board ldb on c.id = ldb.controllers_id
 WHERE
   c.id = $1;
+
+-- name: GetALLControllerTypes :many
+SELECT id,controller_types.name
+FROM controller_types;
