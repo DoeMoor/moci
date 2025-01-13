@@ -15,11 +15,13 @@
 Build and run the Go application:
 ```bash
 go build -o ./_build/moci && ./_build/moci
+```
 
 ### Frontend
 Start the development server:
 ```bash
 npm run dev
+```
 
 ##### Database Setup
 The following SQL scripts are available:
