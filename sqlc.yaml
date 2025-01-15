@@ -1,9 +1,9 @@
 version: "2"
 sql:
-  - schema: "sql/schema"
-    queries: "sql/queries"
+  - schema: "src/sql/schema"
+    queries: "src/sql/queries"
     engine: "postgresql"
     gen:
       go:
-        out: "internal/database"
+        out: "src/internal/database"
         emit_json_tags: true

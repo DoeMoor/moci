@@ -55,18 +55,17 @@ func main() {
 		AppName:      "Moduline Controller Inventory",
 	})
 
-  app.Use(cors.New(cors.Config{
-    AllowOrigins: "http://localhost:3000, http://localhost:8080, https://localhost:3000, https://localhost:8080",
-    AllowHeaders: "Origin, Content-Type, Accept",
-    AllowMethods: "GET, POST, PUT, DELETE",
-}))
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3000, http://localhost:8080, https://localhost:3000, https://localhost:8080, https://localhost:8081, http://localhost:8081",
+		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowMethods: "GET, POST, PUT, DELETE",
+	}))
 
 	app.Static("/", "./app")
 
 	app.Get("/api/controllers", apiConf.GetAllControllers)
 	app.Get("/api/controllers/types", apiConf.GetAllControllerTypes)
 	app.Get("/api/controllers/:id", apiConf.GetControllerById)
-	
 
 	app.Get("/api/iomodules", apiConf.GetAllIoModules)
 	app.Get("/api/iomodules/:id", apiConf.GetIoModuleById)
@@ -79,10 +78,11 @@ func main() {
 	app.Get("/api/miniPcieModules/types", apiConf.GetAllMiniPCeModulesType)
 	// app.Get("/api/miniPcieModules/:id", apiConf.GetMiniPCeModuleById)
 	// app.Post("/api/miniPcieModules", apiConf.CreateMiniPCeModule)
-	
-	
 
-
+	app.Get("/api/m2Modules", apiConf.GetAllm2Modules)
+	app.Get("/api/m2Modules/types", apiConf.GetAllm2ModulesType)
+	// app.Get("/api/m2Modules/:id", apiConf.GetM2ModuleById)
+	app.Post("/api/m2Modules", apiConf.Create2Module)
 
 	utility.ClearTerminal()
 	log.Fatal(app.Listen(serverHost + ":" + serverPort))

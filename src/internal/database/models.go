@@ -155,6 +155,7 @@ type DisplayAdaptersType struct {
 
 type Enclosure struct {
 	ID                uuid.UUID      `json:"id"`
+	ControllerID      uuid.NullUUID  `json:"controller_id"`
 	SerialNumber      sql.NullString `json:"serial_number"`
 	ControllerTypesID uuid.NullUUID  `json:"controller_types_id"`
 	ManufacturersID   uuid.NullUUID  `json:"manufacturers_id"`

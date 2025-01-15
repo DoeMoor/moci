@@ -245,6 +245,7 @@ CREATE TABLE "mini_pcie_modules" (
 
 CREATE TABLE "enclosure" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
+  "controller_id" uuid,
   "serial_number" varchar(20) UNIQUE,
   "controller_types_id" uuid,
   "manufacturers_id" uuid
@@ -317,6 +318,8 @@ ALTER TABLE "orders" ADD FOREIGN KEY ("customers_id") REFERENCES "customers" ("i
 ALTER TABLE "display_adapters" ADD FOREIGN KEY ("display_adapters_type_name") REFERENCES "display_adapters_type" ("name");
 
 ALTER TABLE "mini_pcie_modules" ADD FOREIGN KEY ("mini_pcie_modules_type_id") REFERENCES "mini_pcie_modules_type" ("id");
+
+ALTER TABLE "enclosure" ADD FOREIGN KEY ("controller_id") REFERENCES "controllers" ("id");
 
 ALTER TABLE "enclosure" ADD FOREIGN KEY ("controller_types_id") REFERENCES "controller_types" ("id");
 
