@@ -64,6 +64,7 @@ func main() {
 	app.Static("/", "./app")
 
 	app.Get("/api/controllers", apiConf.GetAllControllers)
+	app.Get("/api/controllers/pcbHwVersions", apiConf.GetAllControllerPcbHwVersions)
 	app.Get("/api/controllers/types", apiConf.GetAllControllerTypes)
 	app.Get("/api/controllers/:id", apiConf.GetControllerById)
 

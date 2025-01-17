@@ -2,10 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	// "fmt"
 	"log"
 	"time"
 
-	// "github.com/doemoor/moci/internal/database"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -183,6 +183,42 @@ func (cnf *ApiConfig) GetAllControllerTypes(c *fiber.Ctx) error {
 		result = append(result, controllerTypesForJson{
 			Name: controllerType.String,
 		})
+	}
+
+	return c.JSON(result)
+}
+func (cnf *ApiConfig) GetAllControllerPcbHwVersions(c *fiber.Ctx) error {
+
+	allControllerPcbHwVersions, err := cnf.DbQueries.GetAllControllersPcbHwVersions(c.Context())
+	if err != nil {
+		c.Response().SetStatusCode(500)
+		log.Println(err)
+		return err
+	}
+	type controllerPcbHwVersionsForJson struct {
+		Version     string `json:"version"`
+		Revision    string `json:"revision"`
+		FullVersion string `json:"fullVersion"`
+	}
+
+	var result []controllerPcbHwVersionsForJson
+
+	for _, version := range allControllerPcbHwVersions {
+		if version.Revision.String == "" {
+			result = append(result, controllerPcbHwVersionsForJson{
+				Version:     version.VersionNumber.String,
+				Revision:    version.Revision.String,
+				FullVersion: version.VersionNumber.String,
+			})
+		}
+
+		if version.Revision.String != "" {
+			result = append(result, controllerPcbHwVersionsForJson{
+				Version:     version.VersionNumber.String,
+				Revision:    version.Revision.String,
+				FullVersion: version.VersionNumber.String + "-" + version.Revision.String,
+			})
+		}
 	}
 
 	return c.JSON(result)

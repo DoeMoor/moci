@@ -104,3 +104,7 @@ WHERE c.id = $1;
 -- name: GetALLControllerTypes :many
 SELECT controller_types.name
 FROM controller_types;
+
+-- name: GetAllControllersPcbHwVersions :many
+select version_number, revision
+from controller_pcb_hw_versions;

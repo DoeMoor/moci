@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"log"
 
 	"database/sql"
@@ -23,6 +24,7 @@ func (cnf *ApiConfig) GetAllm2ModulesType(c *fiber.Ctx) error {
 	type m2ModulesTypeForJson struct {
 		Name string `json:"name"`
 		ModuleTypeNumber int `json:"moduleTypeNumber"`
+		FullName string `json:"fullName"`
 	}
 
 	var m2ModulesTypeJson []m2ModulesTypeForJson
@@ -31,6 +33,7 @@ func (cnf *ApiConfig) GetAllm2ModulesType(c *fiber.Ctx) error {
 		m2ModulesTypeJson = append(m2ModulesTypeJson, m2ModulesTypeForJson{
 			Name:   m2ModuleType.Name.String,
 			ModuleTypeNumber: int(m2ModuleType.ModuleTypeNumber.Int32),
+			FullName: fmt.Sprint(m2ModuleType.Name.String, " ", m2ModuleType.ModuleTypeNumber.Int32),
 		})
 	}
 

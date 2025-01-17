@@ -188,6 +188,39 @@ func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow
 	return items, nil
 }
 
+const getAllControllersPcbHwVersions = `-- name: GetAllControllersPcbHwVersions :many
+select version_number, revision
+from controller_pcb_hw_versions
+`
+
+type GetAllControllersPcbHwVersionsRow struct {
+	VersionNumber sql.NullString `json:"version_number"`
+	Revision      sql.NullString `json:"revision"`
+}
+
+func (q *Queries) GetAllControllersPcbHwVersions(ctx context.Context) ([]GetAllControllersPcbHwVersionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllControllersPcbHwVersions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllControllersPcbHwVersionsRow
+	for rows.Next() {
+		var i GetAllControllersPcbHwVersionsRow
+		if err := rows.Scan(&i.VersionNumber, &i.Revision); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getControllerById = `-- name: GetControllerById :one
 SELECT c.id,
        ct.name                       AS controller_type_name,

@@ -1,9 +1,9 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
-	// "github.com/google/uuid"
-	// "github.com/doemoor/moci/internal/database"
 )
 
 func (cnf *ApiConfig) GetAllMiniPCeModulesType(c *fiber.Ctx) error {
@@ -16,6 +16,7 @@ func (cnf *ApiConfig) GetAllMiniPCeModulesType(c *fiber.Ctx) error {
 	type miniPcieModulesForJson struct {
 		Name string `json:"name"`
 		ModuleTypeNumber int `json:"moduleTypeNumber"`
+		FullName string `json:"fullName"`
 	}
 
 	var miniPcieModulesJson []miniPcieModulesForJson
@@ -24,6 +25,7 @@ func (cnf *ApiConfig) GetAllMiniPCeModulesType(c *fiber.Ctx) error {
 		miniPcieModulesJson = append(miniPcieModulesJson, miniPcieModulesForJson{
 			Name:   miniPcieModule.Name.String,
 			ModuleTypeNumber: int(miniPcieModule.ModuleTypeNumber.Int32),
+			FullName: fmt.Sprint(miniPcieModule.Name.String, " ", miniPcieModule.ModuleTypeNumber.Int32),
 		})
 	}
 

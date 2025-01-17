@@ -24,6 +24,9 @@ FROM io_modules io
 SELECT *
 FROM controller_pcb_hw_versions;
 
+select version_number, revision
+from controller_pcb_hw_versions;
+
 SELECT *
 FROM m2_modules_types;
 
@@ -60,6 +63,8 @@ from controllers;
 
 select display_adapters_type_name as type_name, manufacturer_qr_code as qr_code
 from display_adapters;
+
+
 
 SELECT c.id,
        ct.name                       AS controller_type_name,
