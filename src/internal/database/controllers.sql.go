@@ -14,23 +14,28 @@ import (
 )
 
 const getALLControllerTypes = `-- name: GetALLControllerTypes :many
-SELECT controller_types.name
+SELECT id, controller_types.name
 FROM controller_types
 `
 
-func (q *Queries) GetALLControllerTypes(ctx context.Context) ([]sql.NullString, error) {
+type GetALLControllerTypesRow struct {
+	ID   uuid.UUID      `json:"id"`
+	Name sql.NullString `json:"name"`
+}
+
+func (q *Queries) GetALLControllerTypes(ctx context.Context) ([]GetALLControllerTypesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getALLControllerTypes)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []sql.NullString
+	var items []GetALLControllerTypesRow
 	for rows.Next() {
-		var name sql.NullString
-		if err := rows.Scan(&name); err != nil {
+		var i GetALLControllerTypesRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
-		items = append(items, name)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -189,11 +194,12 @@ func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow
 }
 
 const getAllControllersPcbHwVersions = `-- name: GetAllControllersPcbHwVersions :many
-select version_number, revision
+select id, version_number, revision
 from controller_pcb_hw_versions
 `
 
 type GetAllControllersPcbHwVersionsRow struct {
+	ID            uuid.UUID      `json:"id"`
 	VersionNumber sql.NullString `json:"version_number"`
 	Revision      sql.NullString `json:"revision"`
 }
@@ -207,7 +213,7 @@ func (q *Queries) GetAllControllersPcbHwVersions(ctx context.Context) ([]GetAllC
 	var items []GetAllControllersPcbHwVersionsRow
 	for rows.Next() {
 		var i GetAllControllersPcbHwVersionsRow
-		if err := rows.Scan(&i.VersionNumber, &i.Revision); err != nil {
+		if err := rows.Scan(&i.ID, &i.VersionNumber, &i.Revision); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -351,4 +357,17 @@ func (q *Queries) GetControllerById(ctx context.Context, id uuid.UUID) (GetContr
 		&i.SlotPinoutJson,
 	)
 	return i, err
+}
+
+const getControllerTypesPinout = `-- name: GetControllerTypesPinout :one
+select slot_pinout_json
+from controller_types
+where id = $1
+`
+
+func (q *Queries) GetControllerTypesPinout(ctx context.Context, id uuid.UUID) (pqtype.NullRawMessage, error) {
+	row := q.db.QueryRowContext(ctx, getControllerTypesPinout, id)
+	var slot_pinout_json pqtype.NullRawMessage
+	err := row.Scan(&slot_pinout_json)
+	return slot_pinout_json, err
 }

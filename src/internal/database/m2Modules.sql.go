@@ -14,7 +14,7 @@ import (
 
 const createM2Module = `-- name: CreateM2Module :one
 INSERT INTO m2_modules_types ("name", module_type_number)
-VALUES ($1,$2)
+VALUES ($1, $2)
 returning id, name, module_type_number, created_at, updated_at, is_deleted
 `
 
@@ -73,14 +73,14 @@ func (q *Queries) GetAllM2Modules(ctx context.Context) ([]M2ModulesType, error) 
 }
 
 const getAllM2ModulesTypes = `-- name: GetAllM2ModulesTypes :many
-select name, module_type_number, id
+select id, name, module_type_number
 from m2_modules_types
 `
 
 type GetAllM2ModulesTypesRow struct {
+	ID               uuid.UUID      `json:"id"`
 	Name             sql.NullString `json:"name"`
 	ModuleTypeNumber sql.NullInt32  `json:"module_type_number"`
-	ID               uuid.UUID      `json:"id"`
 }
 
 func (q *Queries) GetAllM2ModulesTypes(ctx context.Context) ([]GetAllM2ModulesTypesRow, error) {
@@ -92,7 +92,7 @@ func (q *Queries) GetAllM2ModulesTypes(ctx context.Context) ([]GetAllM2ModulesTy
 	var items []GetAllM2ModulesTypesRow
 	for rows.Next() {
 		var i GetAllM2ModulesTypesRow
-		if err := rows.Scan(&i.Name, &i.ModuleTypeNumber, &i.ID); err != nil {
+		if err := rows.Scan(&i.ID, &i.Name, &i.ModuleTypeNumber); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

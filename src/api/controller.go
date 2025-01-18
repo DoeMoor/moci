@@ -1,6 +1,7 @@
 package api
 
 import (
+
 	"encoding/json"
 	// "fmt"
 	"log"
@@ -174,6 +175,7 @@ func (cnf *ApiConfig) GetAllControllerTypes(c *fiber.Ctx) error {
 		return err
 	}
 	type controllerTypesForJson struct {
+		ID   uuid.UUID    `json:"id"`
 		Name string `json:"name"`
 	}
 
@@ -181,12 +183,14 @@ func (cnf *ApiConfig) GetAllControllerTypes(c *fiber.Ctx) error {
 
 	for _, controllerType := range allControllerTypes {
 		result = append(result, controllerTypesForJson{
-			Name: controllerType.String,
+			ID:   controllerType.ID,
+			Name: controllerType.Name.String,
 		})
 	}
 
 	return c.JSON(result)
 }
+
 func (cnf *ApiConfig) GetAllControllerPcbHwVersions(c *fiber.Ctx) error {
 
 	allControllerPcbHwVersions, err := cnf.DbQueries.GetAllControllersPcbHwVersions(c.Context())
@@ -223,3 +227,33 @@ func (cnf *ApiConfig) GetAllControllerPcbHwVersions(c *fiber.Ctx) error {
 
 	return c.JSON(result)
 }
+
+func (cnf *ApiConfig) GetControllerTypesPinout(c *fiber.Ctx) error {
+
+	if c.Params("id") == "" {
+		c.Response().SetStatusCode(404)
+		log.Println(c.OriginalURL(), " name is empty")
+		return c.SendString("name is empty")
+	}
+
+	typeID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		c.Response().SetStatusCode(404)
+		log.Println("error parsing uuid: ", c.OriginalURL(), "\n", "  error: ", err)
+		return c.SendString("wrong uuid")
+	}
+
+	controllerTypesPinout, err := cnf.DbQueries.GetControllerTypesPinout(
+		c.Context(),
+		typeID,)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			c.Response().SetStatusCode(404)
+			return c.SendString("controller type not found")
+		}
+		c.Response().SetStatusCode(500)
+		log.Println(err)
+		return err
+	}
+	return c.JSON(controllerTypesPinout.RawMessage)
+	}

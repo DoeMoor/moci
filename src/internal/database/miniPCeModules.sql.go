@@ -86,27 +86,26 @@ func (q *Queries) GetAllMiniPCeModules(ctx context.Context) ([]GetAllMiniPCeModu
 }
 
 const getAllMiniPCeModulesType = `-- name: GetAllMiniPCeModulesType :many
-SELECT id, name, module_type_number, created_at, updated_at, is_deleted
+SELECT id, name, module_type_number
 FROM mini_pcie_modules_type
 `
 
-func (q *Queries) GetAllMiniPCeModulesType(ctx context.Context) ([]MiniPcieModulesType, error) {
+type GetAllMiniPCeModulesTypeRow struct {
+	ID               uuid.UUID      `json:"id"`
+	Name             sql.NullString `json:"name"`
+	ModuleTypeNumber sql.NullInt32  `json:"module_type_number"`
+}
+
+func (q *Queries) GetAllMiniPCeModulesType(ctx context.Context) ([]GetAllMiniPCeModulesTypeRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllMiniPCeModulesType)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []MiniPcieModulesType
+	var items []GetAllMiniPCeModulesTypeRow
 	for rows.Next() {
-		var i MiniPcieModulesType
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.ModuleTypeNumber,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.IsDeleted,
-		); err != nil {
+		var i GetAllMiniPCeModulesTypeRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.ModuleTypeNumber); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

@@ -1,5 +1,5 @@
 -- name: GetAllManufacturers :many
-SELECT *
+SELECT id, name
 FROM manufacturers;
 
 -- name: CreateManufacturer :one

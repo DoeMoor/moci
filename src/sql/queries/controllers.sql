@@ -102,9 +102,14 @@ FROM controllers c
 WHERE c.id = $1;
 
 -- name: GetALLControllerTypes :many
-SELECT controller_types.name
+SELECT id, controller_types.name
 FROM controller_types;
 
 -- name: GetAllControllersPcbHwVersions :many
-select version_number, revision
+select id, version_number, revision
 from controller_pcb_hw_versions;
+
+-- name: GetControllerTypesPinout :one
+select slot_pinout_json
+from controller_types
+where id = $1;

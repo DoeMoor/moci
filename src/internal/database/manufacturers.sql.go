@@ -32,26 +32,25 @@ func (q *Queries) CreateManufacturer(ctx context.Context, name sql.NullString) (
 }
 
 const getAllManufacturers = `-- name: GetAllManufacturers :many
-SELECT id, name, created_at, updated_at, is_deleted
+SELECT id, name
 FROM manufacturers
 `
 
-func (q *Queries) GetAllManufacturers(ctx context.Context) ([]Manufacturer, error) {
+type GetAllManufacturersRow struct {
+	ID   uuid.UUID      `json:"id"`
+	Name sql.NullString `json:"name"`
+}
+
+func (q *Queries) GetAllManufacturers(ctx context.Context) ([]GetAllManufacturersRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllManufacturers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Manufacturer
+	var items []GetAllManufacturersRow
 	for rows.Next() {
-		var i Manufacturer
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.IsDeleted,
-		); err != nil {
+		var i GetAllManufacturersRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

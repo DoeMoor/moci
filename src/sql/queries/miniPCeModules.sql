@@ -1,5 +1,5 @@
 -- name: GetAllMiniPCeModulesType :many
-SELECT *
+SELECT id, name, module_type_number
 FROM mini_pcie_modules_type;
 
 -- name: GetMiniPCeModuleById :one

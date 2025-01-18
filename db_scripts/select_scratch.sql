@@ -57,6 +57,9 @@ FROM projects;
 SELECT id, controller_types.name
 FROM controller_types;
 
+select slot_pinout_json
+from controller_types
+where id=$1;
 
 select *
 from controllers;

@@ -1,11 +1,11 @@
 INSERT INTO mini_pcie_modules_type ("name", module_type_number)
-VALUES ('4G/GPS SIMCOM 7600-G','30100201'),
-       ('4G/GPS SIMCOM 7600-G','30100202');
+VALUES ('4G/GPS SIMCOM 7600-G', '30100201'),
+       ('4G/GPS SIMCOM 7600-G', '30100202');
 
 INSERT INTO mini_pcie_modules_type ("name", module_type_number)
-values ('4G/GPS SIMCOM 7600-G','30100203')
+values ('4G/GPS SIMCOM 7600-G', '30100203')
 on conflict (name, module_type_number) do nothing
-returning concat(name,' ',module_type_number);
+returning concat(name, ' ', module_type_number);
 
 -- RETURNING *;
 -- DELETE FROM mini_pcie_modules_type;
@@ -55,7 +55,8 @@ VALUES ('Global Electronics'),
 -- DELETE FROM manufacturers;
 
 insert into display_adapters_type (name)
-    values ('av123z7m'),('av123z74');
+values ('av123z7m'),
+       ('av123z74');
 
 
 INSERT INTO display_adapters (display_adapters_type_name, manufacturer_qr_code)
@@ -528,7 +529,7 @@ INSERT INTO led_daughter_board
  controllers_id)
 VALUES ('GE000006263835',
         (select id FROM controllers LIMIT 1))
- ;
+;
 ---reTURNING*;
 ---DELETE FROM led_daughter_board ;
 
