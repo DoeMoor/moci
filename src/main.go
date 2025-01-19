@@ -64,13 +64,13 @@ func main() {
 	})
 	// SET UP fucking CORS
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000, http://localhost:8080, https://localhost:3000, https://localhost:8080, https://localhost:8081, http://localhost:8081",
-		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowOrigins: "*",
+		AllowHeaders: "*",
 		AllowMethods: "GET, POST, PUT, DELETE",
 	}))
 
 	// APP ROUTES
-	app.Static("/", "./app")
+	app.Static("/", "./web/dist")
 
 	app.Get("/api/controllers", apiConf.GetAllControllers)
 	app.Get("/api/controllers/pcbHwVersions", apiConf.GetAllControllerPcbHwVersions)

@@ -1,7 +1,6 @@
 package api
 
 import (
-
 	"encoding/json"
 	// "fmt"
 	"log"
@@ -24,6 +23,8 @@ type controllerForJson struct {
 	AssemblyDate                  time.Time       `json:"assemblyDate"`
 	MacAddress                    string          `json:"macAddress"`
 	SimNumber                     string          `json:"simNumber"`
+	EncloserSerialNumber          string          `json:"encloserSerialNumber"`
+	EncloserManufacturerName      string          `json:"encloserManufacturerName"`
 	MiniPcieModulesName           string          `json:"miniPcieModulesName"`
 	MiniPcieModuleTypeNumber      int             `json:"miniPcieModuleTypeNumber"`
 	MiniPcieSerialNumber          string          `json:"miniPcieSerialNumber"`
@@ -72,6 +73,8 @@ func (cnf *ApiConfig) GetAllControllers(c *fiber.Ctx) error {
 			AssemblyDate:                  controller.AssemblyDate.Time,
 			MacAddress:                    controller.MacAddress.String,
 			SimNumber:                     controller.SimNumber.String,
+			EncloserSerialNumber:          controller.EnclosureSerialNumber.String,
+			EncloserManufacturerName:      controller.EnclosureManufacturer.String,
 			MiniPcieModulesName:           controller.MiniPcieModulesName.String,
 			MiniPcieModuleTypeNumber:      int(controller.MiniPcieModuleTypeNumber.Int32),
 			MiniPcieSerialNumber:          controller.MiniPcieSerialNumber.String,
@@ -92,8 +95,8 @@ func (cnf *ApiConfig) GetAllControllers(c *fiber.Ctx) error {
 			OrderID:                       controller.OrderID.UUID,
 			CreatedAt:                     controller.CreatedAt.Time,
 			UpdatedAt:                     controller.UpdatedAt.Time,
-			IsDeleted:                     controller.IsDeleted.Bool,
 			SlotPinoutJson:                controller.SlotPinoutJson.RawMessage,
+			IsDeleted:                     controller.IsDeleted.Bool,
 		})
 	}
 
@@ -175,8 +178,8 @@ func (cnf *ApiConfig) GetAllControllerTypes(c *fiber.Ctx) error {
 		return err
 	}
 	type controllerTypesForJson struct {
-		ID   uuid.UUID    `json:"id"`
-		Name string `json:"name"`
+		ID   uuid.UUID `json:"id"`
+		Name string    `json:"name"`
 	}
 
 	var result []controllerTypesForJson
@@ -245,7 +248,7 @@ func (cnf *ApiConfig) GetControllerTypesPinout(c *fiber.Ctx) error {
 
 	controllerTypesPinout, err := cnf.DbQueries.GetControllerTypesPinout(
 		c.Context(),
-		typeID,)
+		typeID)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			c.Response().SetStatusCode(404)
@@ -256,4 +259,4 @@ func (cnf *ApiConfig) GetControllerTypesPinout(c *fiber.Ctx) error {
 		return err
 	}
 	return c.JSON(controllerTypesPinout.RawMessage)
-	}
+}

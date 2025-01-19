@@ -1,15 +1,28 @@
+
+INSERT INTO manufacturers ("name")
+VALUES ('Global Electronics'),
+       ('Intern'),
+       ('manufacturer1')
+;
+-- RETURNING *;
+-- DELETE FROM manufacturers;
+
 INSERT INTO mini_pcie_modules_type ("name", module_type_number)
 VALUES ('4G/GPS SIMCOM 7600-G', '30100201'),
        ('4G/GPS SIMCOM 7600-G', '30100202');
 
-INSERT INTO mini_pcie_modules_type ("name", module_type_number)
-values ('4G/GPS SIMCOM 7600-G', '30100203')
-on conflict (name, module_type_number) do nothing
-returning concat(name, ' ', module_type_number);
-
 -- RETURNING *;
 -- DELETE FROM mini_pcie_modules_type;
 
+insert into enclosure (serial_number, controller_types_id, manufacturers_id)
+values ('ineni3423',
+         (select id from controller_types limit 1),
+         (select id from manufacturers limit 1)),
+        ('inenssi3423',
+         (select id from controller_types limit 1 offset 1),
+         (select manufacturers.id from manufacturers limit 1 offset 1));
+
+-- update enclosure set controller_id = (select id from controllers limit 1) where serial_number = 'ineni3423';
 
 INSERT INTO mini_pcie_modules (mini_pcie_modules_type_id, serial_number)
 VALUES ((SELECT id FROM mini_pcie_modules_type LIMIT 1),
@@ -46,13 +59,6 @@ VALUES ('B-22-01-07 PAUL'),
 -- DELETE FROM projects;
 
 
-INSERT INTO manufacturers ("name")
-VALUES ('Global Electronics'),
-       ('Intern'),
-       ('manufacturer1')
-;
--- RETURNING *;
--- DELETE FROM manufacturers;
 
 insert into display_adapters_type (name)
 values ('av123z7m'),

@@ -62,6 +62,8 @@ SELECT c.id,
        c.assembly_date,
        c.mac_address,
        c.sim_number,
+       enc.serial_number             as enclosure_serial_number,
+       encman.name                   as enclosure_manufacturer,
        mpt.name                      AS mini_pcie_modules_name,
        mpt.module_type_number        as mini_pcie_module_type_number,
        mpcie.serial_number           AS mini_pcie_serial_number,
@@ -89,6 +91,8 @@ FROM controllers c
          LEFT JOIN projects p ON c.projects_id = p.id
          LEFT JOIN controller_pcb_hw_versions pcbv ON c.controllers_pcb_hw_versions_id = pcbv.id
          LEFT JOIN manufacturers m ON c.manufacturers_id = m.id
+         left join enclosure enc on c.id = enc.controller_id
+         left join manufacturers encman on enc.manufacturers_id = encman.id
          LEFT JOIN mini_pcie_modules mpcie ON c.mini_pcie_modules_id = mpcie.id
          LEFT JOIN m2_modules_types m2t ON c.m2_modules_types_id = m2t.id
          left join display_adapters da on c.display_adapters_id = da.id
@@ -111,6 +115,8 @@ type GetAllControllersRow struct {
 	AssemblyDate                 sql.NullTime          `json:"assembly_date"`
 	MacAddress                   sql.NullString        `json:"mac_address"`
 	SimNumber                    sql.NullString        `json:"sim_number"`
+	EnclosureSerialNumber        sql.NullString        `json:"enclosure_serial_number"`
+	EnclosureManufacturer        sql.NullString        `json:"enclosure_manufacturer"`
 	MiniPcieModulesName          sql.NullString        `json:"mini_pcie_modules_name"`
 	MiniPcieModuleTypeNumber     sql.NullInt32         `json:"mini_pcie_module_type_number"`
 	MiniPcieSerialNumber         sql.NullString        `json:"mini_pcie_serial_number"`
@@ -157,6 +163,8 @@ func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow
 			&i.AssemblyDate,
 			&i.MacAddress,
 			&i.SimNumber,
+			&i.EnclosureSerialNumber,
+			&i.EnclosureManufacturer,
 			&i.MiniPcieModulesName,
 			&i.MiniPcieModuleTypeNumber,
 			&i.MiniPcieSerialNumber,
@@ -243,6 +251,8 @@ SELECT c.id,
        c.assembly_date,
        c.mac_address,
        c.sim_number,
+       enc.serial_number             as enclosure_serial_number,
+       encman.name                   as enclosure_manufacturer,
        mpt.name                      AS mini_pcie_modules_name,
        mpt.module_type_number        as mini_pcie_module_type_number,
        mpcie.serial_number           AS mini_pcie_serial_number,
@@ -270,6 +280,8 @@ FROM controllers c
          LEFT JOIN projects p ON c.projects_id = p.id
          LEFT JOIN controller_pcb_hw_versions pcbv ON c.controllers_pcb_hw_versions_id = pcbv.id
          LEFT JOIN manufacturers m ON c.manufacturers_id = m.id
+         left join enclosure enc on c.id = enc.controller_id
+         left join manufacturers encman on enc.manufacturers_id = encman.id
          LEFT JOIN mini_pcie_modules mpcie ON c.mini_pcie_modules_id = mpcie.id
          LEFT JOIN m2_modules_types m2t ON c.m2_modules_types_id = m2t.id
          left join display_adapters da on c.display_adapters_id = da.id
@@ -293,6 +305,8 @@ type GetControllerByIdRow struct {
 	AssemblyDate                 sql.NullTime          `json:"assembly_date"`
 	MacAddress                   sql.NullString        `json:"mac_address"`
 	SimNumber                    sql.NullString        `json:"sim_number"`
+	EnclosureSerialNumber        sql.NullString        `json:"enclosure_serial_number"`
+	EnclosureManufacturer        sql.NullString        `json:"enclosure_manufacturer"`
 	MiniPcieModulesName          sql.NullString        `json:"mini_pcie_modules_name"`
 	MiniPcieModuleTypeNumber     sql.NullInt32         `json:"mini_pcie_module_type_number"`
 	MiniPcieSerialNumber         sql.NullString        `json:"mini_pcie_serial_number"`
@@ -333,6 +347,8 @@ func (q *Queries) GetControllerById(ctx context.Context, id uuid.UUID) (GetContr
 		&i.AssemblyDate,
 		&i.MacAddress,
 		&i.SimNumber,
+		&i.EnclosureSerialNumber,
+		&i.EnclosureManufacturer,
 		&i.MiniPcieModulesName,
 		&i.MiniPcieModuleTypeNumber,
 		&i.MiniPcieSerialNumber,

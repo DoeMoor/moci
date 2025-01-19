@@ -84,6 +84,8 @@ SELECT c.id,
        c.assembly_date,
        c.mac_address,
        c.sim_number,
+       enc.serial_number             as enclosure_serial_number,
+       encman.name                   as enclosure_manufacturer_name,
        mpt.name                      AS mini_pcie_modules_name,
        mpt.module_type_number        as mini_pcie_module_type_number,
        mpcie.serial_number           AS mini_pcie_serial_number,
@@ -111,6 +113,8 @@ FROM controllers c
          LEFT JOIN projects p ON c.projects_id = p.id
          LEFT JOIN controller_pcb_hw_versions pcbv ON c.controllers_pcb_hw_versions_id = pcbv.id
          LEFT JOIN manufacturers m ON c.manufacturers_id = m.id
+         left join enclosure enc on c.id = enc.controller_id
+         left join manufacturers encman on enc.manufacturers_id = encman.id
          LEFT JOIN mini_pcie_modules mpcie ON c.mini_pcie_modules_id = mpcie.id
          LEFT JOIN m2_modules_types m2t ON c.m2_modules_types_id = m2t.id
          left join display_adapters da on c.display_adapters_id = da.id
