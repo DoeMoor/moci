@@ -19,7 +19,8 @@ FROM io_modules io
          LEFT join customers ON customers.id = orders.customers_id
          LEFT join controller_slot conts ON conts.io_modules_id = io.id;
 
-
+select id, projects."name"
+from projects;
 
 SELECT *
 FROM controller_pcb_hw_versions;
@@ -49,17 +50,38 @@ FROM mini_pcie_modules m
          LEFT JOIN mini_pcie_modules_type mpt ON mpt.id = m.mini_pcie_modules_type_id;
 
 
+select c2.name,
+       ord.id,
+       ord.invoice_number,
+       ord.delivery_date,
+       ord.notes,
+       ct.name,
+       c.serial_number,
+       iot.module_type_name,
+       im.manufacturer_top_qr_code
+from orders ord
+         full join public.controllers c on ord.id = c.order_id
+         inner join public.io_modules im on ord.id = im.order_id
+         left join public.customers c2 on c2.id = ord.customers_id
+         left join public.controller_types ct on c.controller_types_id = ct.id
+         left join io_module_types iot on im.io_module_types_id = iot.id;
+
+select * from controller_slot;
+
 SELECT *
 FROM projects;
 
-
+select c.id, c.name, pj.name
+from customers c
+         left join customer_projects_junction cpj on c.id = cpj.customers_id
+         left join projects pj on cpj.projects_id = pj.id;
 
 SELECT id, controller_types.name
 FROM controller_types;
 
 select slot_pinout_json
 from controller_types
-where id=$1;
+where id = $1;
 
 select *
 from controllers;

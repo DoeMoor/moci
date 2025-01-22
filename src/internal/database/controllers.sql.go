@@ -13,6 +13,94 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const createController = `-- name: CreateController :one
+INSERT INTO CONTROLLERS
+(CONTROLLER_TYPES_ID,
+ PROJECTS_ID,
+ DESCRIPTION,
+ controllers_pcb_hw_versions_id,
+ PCB_VERSION_NUMBER,
+ SERIAL_NUMBER,
+ MANUFACTURERS_ID,
+ MAC_ADDRESS,
+ SIM_NUMBER,
+ MINI_PCIE_MODULES_ID,
+ m2_modules_types_id,
+ ARTICLE_NUMBER,
+ QR_CODE,
+ CAN_TERMINATION_CONFS_ID,
+ USB,
+ serial,
+ manufacturer_qr_code,
+ ORDER_ID)
+VALUES ($1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        $12,
+        $13,
+        $14,
+        $15,
+        $16,
+        $17,
+        $18)
+returning id
+`
+
+type CreateControllerParams struct {
+	ControllerTypesID          uuid.NullUUID  `json:"controller_types_id"`
+	ProjectsID                 uuid.NullUUID  `json:"projects_id"`
+	Description                sql.NullString `json:"description"`
+	ControllersPcbHwVersionsID uuid.NullUUID  `json:"controllers_pcb_hw_versions_id"`
+	PcbVersionNumber           sql.NullInt32  `json:"pcb_version_number"`
+	SerialNumber               sql.NullString `json:"serial_number"`
+	ManufacturersID            uuid.NullUUID  `json:"manufacturers_id"`
+	MacAddress                 sql.NullString `json:"mac_address"`
+	SimNumber                  sql.NullString `json:"sim_number"`
+	MiniPcieModulesID          uuid.NullUUID  `json:"mini_pcie_modules_id"`
+	M2ModulesTypesID           uuid.NullUUID  `json:"m2_modules_types_id"`
+	ArticleNumber              sql.NullString `json:"article_number"`
+	QrCode                     sql.NullString `json:"qr_code"`
+	CanTerminationConfsID      uuid.NullUUID  `json:"can_termination_confs_id"`
+	Usb                        sql.NullBool   `json:"usb"`
+	Serial                     sql.NullBool   `json:"serial"`
+	ManufacturerQrCode         sql.NullString `json:"manufacturer_qr_code"`
+	OrderID                    uuid.NullUUID  `json:"order_id"`
+}
+
+func (q *Queries) CreateController(ctx context.Context, arg CreateControllerParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, createController,
+		arg.ControllerTypesID,
+		arg.ProjectsID,
+		arg.Description,
+		arg.ControllersPcbHwVersionsID,
+		arg.PcbVersionNumber,
+		arg.SerialNumber,
+		arg.ManufacturersID,
+		arg.MacAddress,
+		arg.SimNumber,
+		arg.MiniPcieModulesID,
+		arg.M2ModulesTypesID,
+		arg.ArticleNumber,
+		arg.QrCode,
+		arg.CanTerminationConfsID,
+		arg.Usb,
+		arg.Serial,
+		arg.ManufacturerQrCode,
+		arg.OrderID,
+	)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getALLControllerTypes = `-- name: GetALLControllerTypes :many
 SELECT id, controller_types.name
 FROM controller_types

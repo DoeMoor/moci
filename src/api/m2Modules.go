@@ -13,6 +13,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type m2ModulesTypeForJson struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+	ModuleTypeNumber int `json:"moduleTypeNumber"`
+	FullName string `json:"fullName"`
+}
+
 func (cnf *ApiConfig) GetAllm2ModulesType(c *fiber.Ctx) error {
 	DBm2ModulesTypes, err := cnf.DbQueries.GetAllM2ModulesTypes(c.Context())
 	if err != nil {
@@ -21,16 +28,11 @@ func (cnf *ApiConfig) GetAllm2ModulesType(c *fiber.Ctx) error {
 		return err
 	}
 
-	type m2ModulesTypeForJson struct {
-		Name string `json:"name"`
-		ModuleTypeNumber int `json:"moduleTypeNumber"`
-		FullName string `json:"fullName"`
-	}
-
 	var m2ModulesTypeJson []m2ModulesTypeForJson
 
 	for _, m2ModuleType := range DBm2ModulesTypes {
 		m2ModulesTypeJson = append(m2ModulesTypeJson, m2ModulesTypeForJson{
+			Id:   m2ModuleType.ID.String(),
 			Name:   m2ModuleType.Name.String,
 			ModuleTypeNumber: int(m2ModuleType.ModuleTypeNumber.Int32),
 			FullName: fmt.Sprint(m2ModuleType.Name.String, " ", m2ModuleType.ModuleTypeNumber.Int32),

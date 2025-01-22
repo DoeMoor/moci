@@ -14,6 +14,7 @@ func (cnf *ApiConfig) GetAllMiniPCeModulesType(c *fiber.Ctx) error {
 	}
 
 	type miniPcieModulesForJson struct {
+		Id string `json:"id"`
 		Name string `json:"name"`
 		ModuleTypeNumber int `json:"moduleTypeNumber"`
 		FullName string `json:"fullName"`
@@ -23,6 +24,7 @@ func (cnf *ApiConfig) GetAllMiniPCeModulesType(c *fiber.Ctx) error {
 
 	for _, miniPcieModule := range allMiniPcieModules {
 		miniPcieModulesJson = append(miniPcieModulesJson, miniPcieModulesForJson{
+			Id: miniPcieModule.ID.String(),
 			Name:   miniPcieModule.Name.String,
 			ModuleTypeNumber: int(miniPcieModule.ModuleTypeNumber.Int32),
 			FullName: fmt.Sprint(miniPcieModule.Name.String, " ", miniPcieModule.ModuleTypeNumber.Int32),

@@ -121,3 +121,43 @@ from controller_pcb_hw_versions;
 select slot_pinout_json
 from controller_types
 where id = $1;
+
+-- name: CreateController :one
+INSERT INTO CONTROLLERS
+(CONTROLLER_TYPES_ID,
+ PROJECTS_ID,
+ DESCRIPTION,
+ controllers_pcb_hw_versions_id,
+ PCB_VERSION_NUMBER,
+ SERIAL_NUMBER,
+ MANUFACTURERS_ID,
+ MAC_ADDRESS,
+ SIM_NUMBER,
+ MINI_PCIE_MODULES_ID,
+ m2_modules_types_id,
+ ARTICLE_NUMBER,
+ QR_CODE,
+ CAN_TERMINATION_CONFS_ID,
+ USB,
+ serial,
+ manufacturer_qr_code,
+ ORDER_ID)
+VALUES ($1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11,
+        $12,
+        $13,
+        $14,
+        $15,
+        $16,
+        $17,
+        $18)
+returning id;

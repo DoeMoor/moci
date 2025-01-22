@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -68,47 +69,51 @@ func main() {
 		AllowHeaders: "*",
 		AllowMethods: "GET, POST, PUT, DELETE",
 	}))
-
-	// APP ROUTES
 	
-	app.Use(func(c *fiber.Ctx) error {
+	app.Static("/", "./web")
+	// APP ROUTES
 
-		if c.Path()[:4] == "/api" {
-			return c.Next() // Let the API routes handle it
-	}
+	app.Use(func(c *fiber.Ctx) error {
+		if strings.Contains(c.Path(), "/api") {
+			if c.Path()[:4] == "/api" {
+				return c.Next() // Let the API routes handle it
+			}
+		}
 
 		return c.SendFile("./web/index.html")
 	})
-	
+
 	app.Get("/api/controllers", apiConf.GetAllControllers)
 	app.Get("/api/controllers/pcbHwVersions", apiConf.GetAllControllerPcbHwVersions)
 	app.Get("/api/controllers/types/pinout/:id", apiConf.GetControllerTypesPinout)
 	app.Get("/api/controllers/types", apiConf.GetAllControllerTypes)
 	app.Get("/api/controllers/:id", apiConf.GetControllerById)
-	
+
 	app.Get("/api/iomodules", apiConf.GetAllIoModules)
 	app.Get("/api/iomodules/:id", apiConf.GetIoModuleById)
-	
+
 	app.Get("/api/manufacturers", apiConf.GetAllManufacturers)
 	app.Get("/api/manufacturers/:id", apiConf.GetManufacturerById)
 	app.Post("/api/manufacturers", apiConf.CreateManufacturer)
-	
+
 	// app.Get("/api/miniPcieModules", apiConf.GetAllMiniPCeModules)
 	app.Get("/api/miniPcieModules/types", apiConf.GetAllMiniPCeModulesType)
 	// app.Get("/api/miniPcieModules/:id", apiConf.GetMiniPCeModuleById)
 	// app.Post("/api/miniPcieModules", apiConf.CreateMiniPCeModule)
-	
+
 	app.Get("/api/m2Modules", apiConf.GetAllm2Modules)
 	app.Get("/api/m2Modules/types", apiConf.GetAllm2ModulesType)
 	// app.Get("/api/m2Modules/:id", apiConf.GetM2ModuleById)
 	app.Post("/api/m2Modules", apiConf.Create2Module)
-	
-	app.Static("/", "./web")
+
+	app.Get("/api/customers", apiConf.GetALLCustomers)
+
+	app.Get("/api/projects", apiConf.GetALLProjects)
 
 
 	utility.ClearTerminal()
 	// log.Fatal(app.Listen(serverHost + ":" + serverPort))
-	
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 

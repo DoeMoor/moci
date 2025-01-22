@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/doemoor/moci/internal/database"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -203,6 +204,7 @@ func (cnf *ApiConfig) GetAllControllerPcbHwVersions(c *fiber.Ctx) error {
 		return err
 	}
 	type controllerPcbHwVersionsForJson struct {
+		ID          string `json:"id"`
 		Version     string `json:"version"`
 		Revision    string `json:"revision"`
 		FullVersion string `json:"fullVersion"`
@@ -213,6 +215,7 @@ func (cnf *ApiConfig) GetAllControllerPcbHwVersions(c *fiber.Ctx) error {
 	for _, version := range allControllerPcbHwVersions {
 		if version.Revision.String == "" {
 			result = append(result, controllerPcbHwVersionsForJson{
+				ID:          version.ID.String(),
 				Version:     version.VersionNumber.String,
 				Revision:    version.Revision.String,
 				FullVersion: version.VersionNumber.String,
@@ -221,6 +224,7 @@ func (cnf *ApiConfig) GetAllControllerPcbHwVersions(c *fiber.Ctx) error {
 
 		if version.Revision.String != "" {
 			result = append(result, controllerPcbHwVersionsForJson{
+				ID:          version.ID.String(),
 				Version:     version.VersionNumber.String,
 				Revision:    version.Revision.String,
 				FullVersion: version.VersionNumber.String + "-" + version.Revision.String,
@@ -259,4 +263,23 @@ func (cnf *ApiConfig) GetControllerTypesPinout(c *fiber.Ctx) error {
 		return err
 	}
 	return c.JSON(controllerTypesPinout.RawMessage)
+}
+
+func (cnf *ApiConfig) CreateController(c *fiber.Ctx) error {
+
+	if c.Get("Content-Type") != "application/json" {
+		c.Response().SetStatusCode(400)
+		return c.SendString("Content-Type must be application/json")
+	}
+
+	var newController database.CreateControllerParams
+
+	if err := c.BodyParser(&newController); err != nil {
+		log.Println("CreateController - BodyParser error: ", err)
+		c.Response().SetStatusCode(400)
+		return c.SendString("json parse error")
+	}
+
+	return c.JSON(c.Body())
+
 }

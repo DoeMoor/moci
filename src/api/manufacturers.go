@@ -5,7 +5,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/doemoor/moci/internal/database"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -17,15 +16,22 @@ func (cnf *ApiConfig) GetAllManufacturers(c *fiber.Ctx) error {
 		return err
 	}
 
-	var manufacturers []database.Manufacturer
+	var manufacturersJSON []struct {
+		ID   string `json:"id"`
+		Name string    `json:"name"`
+	}
+
 	for _, manufacturer := range allManufacturers {
-		manufacturers = append(manufacturers, database.Manufacturer{
-			ID:   manufacturer.ID,
-			Name: manufacturer.Name,
+		manufacturersJSON = append(manufacturersJSON, struct {
+			ID   string `json:"id"`
+			Name string    `json:"name"`
+		}{
+			ID:   manufacturer.ID.String(),
+			Name: manufacturer.Name.String,
 		})
 	}
 
-	return c.JSON(manufacturers)
+	return c.JSON(manufacturersJSON)
 }
 
 func (cnf *ApiConfig) GetManufacturerById(c *fiber.Ctx) error {
