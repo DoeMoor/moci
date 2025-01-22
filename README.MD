@@ -13,9 +13,13 @@
 
 ### Backend
 Build and run the Go application:
+
+
+
 ```bash
-go build -o ./_build/moci && ./_build/moci
+(cd ./src && go build -o ./../_build/moci && ./../_build/moci)
 ```
+
 
 ### Frontend
 Start the development server:
