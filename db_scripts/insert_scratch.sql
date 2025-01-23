@@ -1,4 +1,3 @@
-
 INSERT INTO manufacturers ("name")
 VALUES ('Global Electronics'),
        ('Intern'),
@@ -16,11 +15,11 @@ VALUES ('4G/GPS SIMCOM 7600-G', '30100201'),
 
 insert into enclosure (serial_number, controller_types_id, manufacturers_id)
 values ('ineni3423',
-         (select id from controller_types limit 1),
-         (select id from manufacturers limit 1)),
-        ('inenssi3423',
-         (select id from controller_types limit 1 offset 1),
-         (select manufacturers.id from manufacturers limit 1 offset 1));
+        (select id from controller_types limit 1),
+        (select id from manufacturers limit 1)),
+       ('inenssi3423',
+        (select id from controller_types limit 1 offset 1),
+        (select manufacturers.id from manufacturers limit 1 offset 1));
 
 -- update enclosure set controller_id = (select id from controllers limit 1) where serial_number = 'ineni3423';
 
@@ -57,7 +56,6 @@ VALUES ('B-22-01-07 PAUL'),
 ;
 -- RETURNING *;
 -- DELETE FROM projects;
-
 
 
 insert into display_adapters_type (name)
@@ -456,11 +454,12 @@ VALUES ((select id FROM io_module_types LIMIT 1),
         'rma_number',
         (select id FROM io_module_hw_versions LIMIT 1),
         (select id from orders limit 1)),
+
        ((select id FROM io_module_types LIMIT 1 OFFSET 1),
         'GE00000623367',
         'GE00000623027',
         'rma_number',
-        (select id FROM io_module_hw_versions LIMIT 1), null),
+        (select id FROM io_module_hw_versions LIMIT 1), (select id from orders limit 1)),
        ((select id FROM io_module_types LIMIT 1 OFFSET 1),
         'GE00000523367',
         'GE00000423027',
@@ -527,6 +526,29 @@ VALUES ((SELECT id FROM controller_types LIMIT 1),
         'GE00300f626856',
         (SELECT id FROM orders LIMIT 1))
 ;
+
+-- INSERT INTO CONTROLLERS
+-- (CONTROLLER_TYPES_ID,
+--  PROJECTS_ID,
+--  DESCRIPTION,
+--  controllers_pcb_hw_versions_id,
+--  PCB_VERSION_NUMBER,
+--  SERIAL_NUMBER,
+--  MANUFACTURERS_ID,
+--  MAC_ADDRESS,
+--  SIM_NUMBER,
+--  MINI_PCIE_MODULES_ID,
+--  m2_modules_types_id,
+--  ARTICLE_NUMBER,
+--  QR_CODE,
+--  CAN_TERMINATION_CONFS_ID,
+--  USB,
+--  serial,
+--  manufacturer_qr_code,
+--  ORDER_ID)
+-- VALUES
+-- ;
+
 -- RETURNING *;
 -- DELETE FROM CONTROLLERS;
 
@@ -560,7 +582,13 @@ VALUES ((select id FROM controllers limit 1), (select id FROM io_modules LIMIT 1
 
 
 INSERT INTO customer_projects_junction (customers_id, projects_id)
-VALUES ((select id FROM customers limit 1), (select id FROM projects LIMIT 1))
+VALUES (
+        (select id FROM customers limit 1),
+        (select id FROM projects LIMIT 1)
+       ),(
+        (select id FROM customers limit 1),
+        (select id FROM projects LIMIT 1 offset 2)
+       )
 ;
 -- RETURNING *;
 -- DELETE FROM customer_projects_junction;
