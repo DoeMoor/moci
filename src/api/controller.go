@@ -6,12 +6,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/doemoor/moci/internal/database"
+	// "github.com/doemoor/moci/internal/database"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
-type controllerForJson struct {
+type GetControllerJsonResponse struct {
 	ID                            string          `json:"id"`
 	ControllerTypeName            string          `json:"controllerTypeName"`
 	IoModuleSocketAmount          int             `json:"ioModuleSocketAmount"`
@@ -58,10 +58,10 @@ func (cnf *ApiConfig) GetAllControllers(c *fiber.Ctx) error {
 		return err
 	}
 
-	var allControllerJson []controllerForJson
+	var allControllerJson []GetControllerJsonResponse
 
 	for _, controller := range allController {
-		allControllerJson = append(allControllerJson, controllerForJson{
+		allControllerJson = append(allControllerJson, GetControllerJsonResponse{
 			ID:                            controller.ID.String(),
 			ControllerTypeName:            controller.ControllerTypeName.String,
 			IoModuleSocketAmount:          int(controller.IoModuleSocketAmount.Int32),
@@ -130,7 +130,7 @@ func (cnf *ApiConfig) GetControllerById(c *fiber.Ctx) error {
 		return err
 	}
 
-	controllerJson := controllerForJson{
+	controllerJson := GetControllerJsonResponse{
 		ID:                            controllerById.ID.String(),
 		ControllerTypeName:            controllerById.ControllerTypeName.String,
 		IoModuleSocketAmount:          int(controllerById.IoModuleSocketAmount.Int32),
@@ -272,14 +272,64 @@ func (cnf *ApiConfig) CreateController(c *fiber.Ctx) error {
 		return c.SendString("Content-Type must be application/json")
 	}
 
-	var newController database.CreateControllerParams
+	type Controller struct {
+		TypesID            string `json:"typesId"`
+		ProjectsID         string `json:"projectsId"`
+		Description        string `json:"description"`
+		PcbHwVersionsID    string `json:"pcbHwVersionsId"`
+		SerialNumber       string `json:"serialNumber"`
+		ManufacturersID    string `json:"manufacturersId"`
+		MacAddress         string `json:"macAddress"`
+		SimNumber          string `json:"simNumber"`
+		M2ModulesTypesID   string `json:"m2ModulesTypesId"`
+		ArticleNumber      string `json:"articleNumber"`
+		InfoQrCode             string `json:"infoQrCode"`
+		USB                bool   `json:"usb"`
+		Serial             bool   `json:"serial"`
+		ManufacturerQrCode string `json:"manufacturerQrCode"`
+		OrderID            string `json:"orderId"`
+		AssemblyDate       string `json:"assemblyDate"`
+	}
 
-	if err := c.BodyParser(&newController); err != nil {
+	type CanTermination struct {
+		Can1Terminated bool `json:"can1Terminated"`
+		Can2Terminated bool `json:"can2Terminated"`
+		Can3Terminated bool `json:"can3Terminated"`
+		Can4Terminated bool `json:"can4Terminated"`
+	}
+
+	type Display struct {
+		TypeID             string `json:"typeId"`
+		ManufacturerQrCode string `json:"manufacturerQrCode"`
+	}
+
+	type Encloser struct {
+		ManufacturerID string `json:"manufacturerId"`
+		SerialNumber   string `json:"serialNumber"`
+	}
+
+	type MiniPcie struct {
+		ModulesID    string `json:"modulesId"`
+		SerialNumber string `json:"serialNumber"`
+	}
+
+	type newController struct {
+		CustomerID     string         `json:"customerId"`
+		Controller     Controller     `json:"controller"`
+		CanTermination CanTermination `json:"canTermination"`
+		Display        Display        `json:"display"`
+		Encloser       Encloser       `json:"encloser"`
+		MiniPcie       MiniPcie       `json:"miniPcie"`
+		LedBoardQrCode string         `json:"ledBoardQrCode"`
+	}
+	
+	var controller newController
+
+	if err := c.BodyParser(&controller); err != nil {
 		log.Println("CreateController - BodyParser error: ", err)
 		c.Response().SetStatusCode(400)
 		return c.SendString("json parse error")
 	}
 
-	return c.JSON(c.Body())
-
+	return c.JSON(controller)
 }

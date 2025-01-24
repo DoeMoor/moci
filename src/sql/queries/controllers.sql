@@ -128,7 +128,6 @@ INSERT INTO CONTROLLERS
  PROJECTS_ID,
  DESCRIPTION,
  controllers_pcb_hw_versions_id,
- PCB_VERSION_NUMBER,
  SERIAL_NUMBER,
  MANUFACTURERS_ID,
  MAC_ADDRESS,
@@ -158,6 +157,5 @@ VALUES ($1,
         $14,
         $15,
         $16,
-        $17,
-        $18)
+        $17)
 returning id;

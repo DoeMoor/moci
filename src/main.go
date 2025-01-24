@@ -83,6 +83,7 @@ func main() {
 		return c.SendFile("./web/index.html")
 	})
 
+	app.Post("/api/controllers", apiConf.CreateController)
 	app.Get("/api/controllers", apiConf.GetAllControllers)
 	app.Get("/api/controllers/pcbHwVersions", apiConf.GetAllControllerPcbHwVersions)
 	app.Get("/api/controllers/types/pinout/:id", apiConf.GetControllerTypesPinout)
@@ -109,6 +110,8 @@ func main() {
 	app.Get("/api/customers", apiConf.GetALLCustomers)
 
 	app.Get("/api/projects", apiConf.GetALLProjects)
+
+	app.Get("/api/display/types", apiConf.GetAllDisplayTypes)
 
 
 	utility.ClearTerminal()

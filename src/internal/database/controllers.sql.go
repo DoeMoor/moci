@@ -19,7 +19,6 @@ INSERT INTO CONTROLLERS
  PROJECTS_ID,
  DESCRIPTION,
  controllers_pcb_hw_versions_id,
- PCB_VERSION_NUMBER,
  SERIAL_NUMBER,
  MANUFACTURERS_ID,
  MAC_ADDRESS,
@@ -49,8 +48,7 @@ VALUES ($1,
         $14,
         $15,
         $16,
-        $17,
-        $18)
+        $17)
 returning id
 `
 
@@ -59,7 +57,6 @@ type CreateControllerParams struct {
 	ProjectsID                 uuid.NullUUID  `json:"projects_id"`
 	Description                sql.NullString `json:"description"`
 	ControllersPcbHwVersionsID uuid.NullUUID  `json:"controllers_pcb_hw_versions_id"`
-	PcbVersionNumber           sql.NullInt32  `json:"pcb_version_number"`
 	SerialNumber               sql.NullString `json:"serial_number"`
 	ManufacturersID            uuid.NullUUID  `json:"manufacturers_id"`
 	MacAddress                 sql.NullString `json:"mac_address"`
@@ -81,7 +78,6 @@ func (q *Queries) CreateController(ctx context.Context, arg CreateControllerPara
 		arg.ProjectsID,
 		arg.Description,
 		arg.ControllersPcbHwVersionsID,
-		arg.PcbVersionNumber,
 		arg.SerialNumber,
 		arg.ManufacturersID,
 		arg.MacAddress,
