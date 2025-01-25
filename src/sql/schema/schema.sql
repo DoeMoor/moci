@@ -14,7 +14,7 @@ CREATE TABLE "controllers" (
   "m2_modules_types_id" uuid,
   "display_adapters_id" uuid,
   "article_number" varchar(10),
-  "qr_code" varchar(100),
+  "info_qr_code" varchar(100),
   "can_termination_confs_id" uuid,
   "usb" bool,
   "serial" bool,
