@@ -14,7 +14,7 @@ CREATE TABLE "controllers" (
   "m2_modules_types_id" uuid,
   "display_adapters_id" uuid,
   "article_number" varchar(10),
-  "qr_code" varchar(100),
+  "info_qr_code" varchar(100),
   "can_termination_confs_id" uuid,
   "usb" bool,
   "serial" bool,
@@ -56,10 +56,10 @@ CREATE TABLE "led_daughter_board" (
 
 CREATE TABLE "can_termination_confs" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "can_1_terminated" bool,
-  "can_3_terminated" bool,
-  "can_2_terminated" bool,
-  "can_4_terminated" bool,
+  "can_1_terminated" bool not null ,
+  "can_3_terminated" bool not null ,
+  "can_2_terminated" bool not null ,
+  "can_4_terminated" bool not null ,
   "created_at" timestamp DEFAULT (now()),
   "updated_at" timestamp,
   "is_deleted" bool DEFAULT false
@@ -250,6 +250,8 @@ CREATE TABLE "enclosure" (
   "controller_types_id" uuid,
   "manufacturers_id" uuid
 );
+
+CREATE UNIQUE INDEX ON "can_termination_confs" ("can_1_terminated", "can_2_terminated", "can_3_terminated", "can_4_terminated");
 
 CREATE INDEX ON "controller_slot" ("controllers_id", "slot_number");
 

@@ -79,17 +79,11 @@ from customers c
 SELECT id, controller_types.name
 FROM controller_types;
 
-select slot_pinout_json
-from controller_types
-where id = $1;
-
 select *
 from controllers;
 
 select display_adapters_type_name as type_name, manufacturer_qr_code as qr_code
 from display_adapters;
-
-
 
 SELECT c.id,
        ct.name                       AS controller_type_name,
@@ -117,7 +111,7 @@ SELECT c.id,
        da.display_adapters_type_name as display_type,
        da.manufacturer_qr_code       as display_manufacturer_qr_code,
        c.article_number,
-       c.qr_code                     as controller_info_qr_code,
+       c.info_qr_code                     as controller_info_qr_code,
        ctc.can_1_terminated,
        ctc.can_2_terminated,
        ctc.can_3_terminated,
@@ -183,3 +177,7 @@ FROM controller_slot
 WHERE controller_slot.controllers_id = (select id
                                         from controllers
                                         limit 1 OFFSET 1);
+select * from can_termination_confs;
+
+select * from display_adapters;
+select * from display_adapters_type;

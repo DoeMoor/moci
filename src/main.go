@@ -42,7 +42,7 @@ func main() {
 
 	// DB Config for handlers
 	var apiConf = &api.ApiConfig{
-		DbQueries: database.New(db),
+		DbQ: database.New(db),
 	}
 
 	// CHECK ENVIRONMENT VARIABLES
@@ -69,7 +69,7 @@ func main() {
 		AllowHeaders: "*",
 		AllowMethods: "GET, POST, PUT, DELETE",
 	}))
-	
+
 	app.Static("/", "./web")
 	// APP ROUTES
 
@@ -112,7 +112,6 @@ func main() {
 	app.Get("/api/projects", apiConf.GetALLProjects)
 
 	app.Get("/api/display/types", apiConf.GetAllDisplayTypes)
-
 
 	utility.ClearTerminal()
 	// log.Fatal(app.Listen(serverHost + ":" + serverPort))

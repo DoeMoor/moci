@@ -14,14 +14,14 @@ import (
 )
 
 type m2ModulesTypeForJson struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-	ModuleTypeNumber int `json:"moduleTypeNumber"`
-	FullName string `json:"fullName"`
+	Id               string `json:"id"`
+	Name             string `json:"name"`
+	ModuleTypeNumber int    `json:"moduleTypeNumber"`
+	FullName         string `json:"fullName"`
 }
 
 func (cnf *ApiConfig) GetAllm2ModulesType(c *fiber.Ctx) error {
-	DBm2ModulesTypes, err := cnf.DbQueries.GetAllM2ModulesTypes(c.Context())
+	DBm2ModulesTypes, err := cnf.DbQ.GetAllM2ModulesTypes(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
 		log.Println(err)
@@ -32,10 +32,10 @@ func (cnf *ApiConfig) GetAllm2ModulesType(c *fiber.Ctx) error {
 
 	for _, m2ModuleType := range DBm2ModulesTypes {
 		m2ModulesTypeJson = append(m2ModulesTypeJson, m2ModulesTypeForJson{
-			Id:   m2ModuleType.ID.String(),
-			Name:   m2ModuleType.Name.String,
+			Id:               m2ModuleType.ID.String(),
+			Name:             m2ModuleType.Name.String,
 			ModuleTypeNumber: int(m2ModuleType.ModuleTypeNumber.Int32),
-			FullName: fmt.Sprint(m2ModuleType.Name.String, " ", m2ModuleType.ModuleTypeNumber.Int32),
+			FullName:         fmt.Sprint(m2ModuleType.Name.String, " ", m2ModuleType.ModuleTypeNumber.Int32),
 		})
 	}
 
@@ -44,23 +44,23 @@ func (cnf *ApiConfig) GetAllm2ModulesType(c *fiber.Ctx) error {
 
 func (cnf *ApiConfig) GetAllm2Modules(c *fiber.Ctx) error {
 
-	allM2Modules, err := cnf.DbQueries.GetAllM2Modules(c.Context())
+	allM2Modules, err := cnf.DbQ.GetAllM2Modules(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
 		return err
 	}
 	type m2ModulesForJson struct {
-		Id   uuid.UUID `json:"id"`
-		Name string    `json:"name"`
-		ModuleTypeNumber int `json:"moduleTypeNumber"`
+		Id               uuid.UUID `json:"id"`
+		Name             string    `json:"name"`
+		ModuleTypeNumber int       `json:"moduleTypeNumber"`
 	}
 
 	var m2ModulesJson []m2ModulesForJson
-	
+
 	for _, m2Module := range allM2Modules {
 		m2ModulesJson = append(m2ModulesJson, m2ModulesForJson{
-			Id:   m2Module.ID,
-			Name: m2Module.Name.String,
+			Id:               m2Module.ID,
+			Name:             m2Module.Name.String,
 			ModuleTypeNumber: int(m2Module.ModuleTypeNumber.Int32),
 		})
 	}
@@ -76,12 +76,12 @@ func (cnf *ApiConfig) Create2Module(c *fiber.Ctx) error {
 	}
 
 	type newM2Module struct {
-		Name string `json:"name"`
-		ModuleTypeNumber int `json:"moduleTypeNumber"`
+		Name             string `json:"name"`
+		ModuleTypeNumber int    `json:"moduleTypeNumber"`
 	}
 
 	var body newM2Module
-	
+
 	if err := c.BodyParser(&body); err != nil {
 		log.Println(err)
 		log.Println(string(c.Request().Body()))
@@ -99,7 +99,7 @@ func (cnf *ApiConfig) Create2Module(c *fiber.Ctx) error {
 		},
 	}
 
-	resultOfInsert, err := cnf.DbQueries.CreateM2Module(c.Context(), param)
+	resultOfInsert, err := cnf.DbQ.CreateM2Module(c.Context(), param)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
 			c.Response().SetStatusCode(400)
@@ -107,19 +107,19 @@ func (cnf *ApiConfig) Create2Module(c *fiber.Ctx) error {
 			return c.SendString("m2 module already exists")
 		}
 		c.Response().SetStatusCode(500)
-		c.SendString("internal server error")
-		return err
+		log.Println("Error creating m2 module: ", err)
+		return c.SendString("internal server error")
 	}
 
 	type m2ModuleForJson struct {
-		Id   uuid.UUID `json:"id"`
-		Name string    `json:"name"`
-		ModuleTypeNumber int `json:"moduleTypeNumber"`
+		Id               uuid.UUID `json:"id"`
+		Name             string    `json:"name"`
+		ModuleTypeNumber int       `json:"moduleTypeNumber"`
 	}
 
 	resultOfInsertForJson := m2ModuleForJson{
-		Id:   resultOfInsert.ID,
-		Name: resultOfInsert.Name.String,
+		Id:               resultOfInsert.ID,
+		Name:             resultOfInsert.Name.String,
 		ModuleTypeNumber: int(resultOfInsert.ModuleTypeNumber.Int32),
 	}
 

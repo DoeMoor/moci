@@ -6,6 +6,8 @@
 - **SQLC (SQL Compiler)** - [📄 Documentation](https://docs.sqlc.dev/en/stable/index.html)
 - **Goose (Database Migration Tool)** - [🛠️ GitHub](https://github.com/pressly/goose)
 - **Webi (install and update Go version)** - [📚 Documentation](https://webinstall.dev/golang/)
+- **Golangci-lint (Go linter)** - [📚 Documentation](https://golangci-lint.run/)
+- **Task (Task runner)** - [📚 Documentation](https://taskfile.dev/usage/)
 
 #### Framework 
 - **Fiber (Go HTTP framework)** - [🌐 Documentation](https://docs.gofiber.io/)

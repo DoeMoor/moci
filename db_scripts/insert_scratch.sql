@@ -483,7 +483,7 @@ INSERT INTO CONTROLLERS
  MINI_PCIE_MODULES_ID,
  m2_modules_types_id,
  ARTICLE_NUMBER,
- QR_CODE,
+ info_qr_code,
  CAN_TERMINATION_CONFS_ID,
  USB,
  serial,
@@ -592,6 +592,22 @@ VALUES (
 ;
 -- RETURNING *;
 -- DELETE FROM customer_projects_junction;
+
+
+
+
+begin;
+insert into can_termination_confs (can_1_terminated, can_2_terminated, can_3_terminated,can_4_terminated)
+VALUES(true,true,false,false)
+on conflict (can_1_terminated, can_2_terminated, can_3_terminated,can_4_terminated) do nothing
+returning id;
+
+insert into display_adapters (display_adapters_type_name, manufacturer_qr_code)
+values ('rsta','arstarst')
+on conflict (display_adapters_type_name,manufacturer_qr_code) do update
+
+
+
 
 
 

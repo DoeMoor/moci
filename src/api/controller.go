@@ -1,12 +1,15 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
+
 	// "fmt"
 	"log"
 	"time"
 
 	// "github.com/doemoor/moci/internal/database"
+	"github.com/doemoor/moci/internal/database"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -49,9 +52,53 @@ type GetControllerJsonResponse struct {
 	IsDeleted                     bool            `json:"isDeleted"`
 	SlotPinoutJson                json.RawMessage `json:"slotPinoutJson"`
 }
+type AddNewController struct {
+	TypesID            string `json:"typesId"`
+	ProjectsID         string `json:"projectsId"`
+	Description        string `json:"description"`
+	PcbHwVersionsID    string `json:"pcbHwVersionsId"`
+	SerialNumber       string `json:"serialNumber"`
+	ManufacturersID    string `json:"manufacturersId"`
+	MacAddress         string `json:"macAddress"`
+	SimNumber          string `json:"simNumber"`
+	M2ModulesTypesID   string `json:"m2ModulesTypesId"`
+	ArticleNumber      string `json:"articleNumber"`
+	InfoQrCode         string `json:"infoQrCode"`
+	USB                bool   `json:"usb"`
+	Serial             bool   `json:"serial"`
+	ManufacturerQrCode string `json:"manufacturerQrCode"`
+	OrderID            string `json:"orderId"`
+	AssemblyDate       string `json:"assemblyDate"`
+}
+
+type Display struct {
+	Id                 uuid.UUID `json:"id"`
+	TypeID             string    `json:"typeId"`
+	ManufacturerQrCode string    `json:"manufacturerQrCode"`
+}
+
+type Encloser struct {
+	Id             uuid.UUID `json:"id"`
+	ManufacturerID string    `json:"manufacturerId"`
+	SerialNumber   string    `json:"serialNumber"`
+}
+
+type MiniPcie struct {
+	Id           uuid.UUID `json:"id"`
+	ModulesID    string    `json:"modulesId"`
+	SerialNumber string    `json:"serialNumber"`
+}
+
+type CanTermination struct {
+	Id             uuid.UUID `json:"id"`
+	Can1Terminated bool      `json:"can1Terminated"`
+	Can2Terminated bool      `json:"can2Terminated"`
+	Can3Terminated bool      `json:"can3Terminated"`
+	Can4Terminated bool      `json:"can4Terminated"`
+}
 
 func (cnf *ApiConfig) GetAllControllers(c *fiber.Ctx) error {
-	allController, err := cnf.DbQueries.GetAllControllers(c.Context())
+	allController, err := cnf.DbQ.GetAllControllers(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
 		log.Println(err)
@@ -119,7 +166,7 @@ func (cnf *ApiConfig) GetControllerById(c *fiber.Ctx) error {
 		return c.SendString("wrong uuid")
 	}
 
-	controllerById, err := cnf.DbQueries.GetControllerById(c.Context(), uuid)
+	controllerById, err := cnf.DbQ.GetControllerById(c.Context(), uuid)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			c.Response().SetStatusCode(404)
@@ -172,7 +219,7 @@ func (cnf *ApiConfig) GetControllerById(c *fiber.Ctx) error {
 
 func (cnf *ApiConfig) GetAllControllerTypes(c *fiber.Ctx) error {
 
-	allControllerTypes, err := cnf.DbQueries.GetALLControllerTypes(c.Context())
+	allControllerTypes, err := cnf.DbQ.GetALLControllerTypes(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
 		log.Println(err)
@@ -197,7 +244,7 @@ func (cnf *ApiConfig) GetAllControllerTypes(c *fiber.Ctx) error {
 
 func (cnf *ApiConfig) GetAllControllerPcbHwVersions(c *fiber.Ctx) error {
 
-	allControllerPcbHwVersions, err := cnf.DbQueries.GetAllControllersPcbHwVersions(c.Context())
+	allControllerPcbHwVersions, err := cnf.DbQ.GetAllControllersPcbHwVersions(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
 		log.Println(err)
@@ -250,7 +297,7 @@ func (cnf *ApiConfig) GetControllerTypesPinout(c *fiber.Ctx) error {
 		return c.SendString("wrong uuid")
 	}
 
-	controllerTypesPinout, err := cnf.DbQueries.GetControllerTypesPinout(
+	controllerTypesPinout, err := cnf.DbQ.GetControllerTypesPinout(
 		c.Context(),
 		typeID)
 	if err != nil {
@@ -272,64 +319,134 @@ func (cnf *ApiConfig) CreateController(c *fiber.Ctx) error {
 		return c.SendString("Content-Type must be application/json")
 	}
 
-	type Controller struct {
-		TypesID            string `json:"typesId"`
-		ProjectsID         string `json:"projectsId"`
-		Description        string `json:"description"`
-		PcbHwVersionsID    string `json:"pcbHwVersionsId"`
-		SerialNumber       string `json:"serialNumber"`
-		ManufacturersID    string `json:"manufacturersId"`
-		MacAddress         string `json:"macAddress"`
-		SimNumber          string `json:"simNumber"`
-		M2ModulesTypesID   string `json:"m2ModulesTypesId"`
-		ArticleNumber      string `json:"articleNumber"`
-		InfoQrCode             string `json:"infoQrCode"`
-		USB                bool   `json:"usb"`
-		Serial             bool   `json:"serial"`
-		ManufacturerQrCode string `json:"manufacturerQrCode"`
-		OrderID            string `json:"orderId"`
-		AssemblyDate       string `json:"assemblyDate"`
+	type newControllerJson struct {
+		CustomerID     string           `json:"customerId"`
+		Controller     AddNewController `json:"controller"`
+		CanTermination CanTermination   `json:"canTermination"`
+		Display        Display          `json:"display"`
+		Encloser       Encloser         `json:"encloser"`
+		MiniPcie       MiniPcie         `json:"miniPcie"`
+		LedBoardQrCode string           `json:"ledBoardQrCode"`
 	}
 
-	type CanTermination struct {
-		Can1Terminated bool `json:"can1Terminated"`
-		Can2Terminated bool `json:"can2Terminated"`
-		Can3Terminated bool `json:"can3Terminated"`
-		Can4Terminated bool `json:"can4Terminated"`
-	}
+	var newController newControllerJson
 
-	type Display struct {
-		TypeID             string `json:"typeId"`
-		ManufacturerQrCode string `json:"manufacturerQrCode"`
-	}
-
-	type Encloser struct {
-		ManufacturerID string `json:"manufacturerId"`
-		SerialNumber   string `json:"serialNumber"`
-	}
-
-	type MiniPcie struct {
-		ModulesID    string `json:"modulesId"`
-		SerialNumber string `json:"serialNumber"`
-	}
-
-	type newController struct {
-		CustomerID     string         `json:"customerId"`
-		Controller     Controller     `json:"controller"`
-		CanTermination CanTermination `json:"canTermination"`
-		Display        Display        `json:"display"`
-		Encloser       Encloser       `json:"encloser"`
-		MiniPcie       MiniPcie       `json:"miniPcie"`
-		LedBoardQrCode string         `json:"ledBoardQrCode"`
-	}
-	
-	var controller newController
-
-	if err := c.BodyParser(&controller); err != nil {
+	if err := c.BodyParser(&newController); err != nil {
 		log.Println("CreateController - BodyParser error: ", err)
 		c.Response().SetStatusCode(400)
 		return c.SendString("json parse error")
 	}
 
-	return c.JSON(controller)
+	//begin assembly of new controller object
+
+	// validate controller can termination
+	canParam, canErr := validateCanTerminationConf(newController.CanTermination)
+	if canErr != nil {
+		log.Println("CreateController - CanTermination error: ", canErr)
+		c.Response().SetStatusCode(400)
+		return c.SendString("Can termination parse error")
+	}
+	// try to get termination config id
+	canTerminationID, err := cnf.DbQ.GetTerminationConfigIdByCanTerminated(c.Context(), canParam)
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println("CreateController - GetTerminationConfigIdByCanTerminated error: ", err)
+			c.Response().SetStatusCode(400)
+			return c.SendString("Can termination parse error")
+		}
+	}
+	newController.CanTermination.Id.Scan(canTerminationID)
+
+	// check if display is present in db
+	var displaySN sql.NullString
+	if err := displaySN.Scan(newController.Display.ManufacturerQrCode); err != nil {
+		log.Println("CreateController - Display parse error: ", err)
+		c.Response().SetStatusCode(400)
+		return c.SendString("Display parse error")
+	}
+	display, displayErr := cnf.DbQ.GetDisplayAdapterByQR(c.Context(), displaySN)
+	if displayErr != nil {
+		if displayErr.Error() != "sql: no rows in result set" {
+			log.Println("CreateController - GetDisplayAdapterByQR error: ", displayErr)
+			c.Response().SetStatusCode(400)
+			return c.SendString("Display parse error")
+		}
+	}
+	if display.ID.String() != "00000000-0000-0000-0000-000000000000" {
+		log.Println("CreateController - Display already exists: ")
+		return c.SendString("Display already exists")
+	}
+
+	// check if encloser is present in db
+	var encloserSN sql.NullString
+	if err := encloserSN.Scan(newController.Encloser.SerialNumber); err != nil {
+		log.Println("CreateController - Encloser parse error: ", err)
+		c.Response().SetStatusCode(400)
+		return c.SendString("Encloser parse error")
+	}
+	encloser, encloserErr := cnf.DbQ.GetEncloserBySN(c.Context(), encloserSN)
+	if encloserErr != nil {
+		if encloserErr.Error() != "sql: no rows in result set" {
+			log.Println("CreateController - GetEncloserBySN error: ", encloserErr)
+			c.Response().SetStatusCode(400)
+			return c.SendString("Encloser parse error")
+		}
+	}
+	if encloser.ID.String() != "00000000-0000-0000-0000-000000000000" {
+		log.Println("CreateController - Encloser already exists: ", encloser)
+		return c.SendString("Encloser already exists")
+	}
+
+	// check if miniPcie is present in db
+	var miniPcieSN sql.NullString
+	if err := miniPcieSN.Scan(newController.MiniPcie.SerialNumber); err != nil {
+		log.Println("CreateController - MiniPcie parse error: ", err)
+		c.Response().SetStatusCode(400)
+		return c.SendString("MiniPcie parse error")
+	}
+	miniPcie, miniPcieErr := cnf.DbQ.GetMiniPCIeModuleBySN(c.Context(), miniPcieSN)
+	if miniPcieErr != nil {
+		if miniPcieErr.Error() != "sql: no rows in result set" {
+			log.Println("CreateController - GetMiniPcieBySN error: ", miniPcieErr)
+			c.Response().SetStatusCode(400)
+			return c.SendString("MiniPcie parse error")
+		}
+	}
+	if miniPcie.ID.String() != "00000000-0000-0000-0000-000000000000" {
+		log.Println("CreateController - MiniPcie already exists: ", miniPcie)
+		return c.SendString("MiniPcie already exists")
+	}
+
+	// check if ledBoard is present in db
+	var ledBoardSN sql.NullString
+	if err := ledBoardSN.Scan(newController.LedBoardQrCode); err != nil {
+		log.Println("CreateController - LedBoard parse error: ", err)
+		c.Response().SetStatusCode(400)
+		return c.SendString("LedBoard parse error")
+	}
+	ledBoard, ledBoardErr := cnf.DbQ.GetLedBoardByQR(c.Context(), ledBoardSN)
+	if ledBoardErr != nil {
+		if ledBoardErr.Error() != "sql: no rows in result set" {
+			log.Println("CreateController - GetLedBoardByQR error: ", ledBoardErr)
+			c.Response().SetStatusCode(400)
+			return c.SendString("LedBoard parse error")
+		}
+	}
+	if ledBoard.ID.String() != "00000000-0000-0000-0000-000000000000" {
+		log.Println("CreateController - LedBoard already exists: ", ledBoard)
+		return c.SendString("LedBoard already exists")
+	}
+
+	// end assembly
+
+	return c.JSON(newController)
+}
+
+func validateCanTerminationConf(ct CanTermination) (database.GetTerminationConfigIdByCanTerminatedParams, error) {
+	var canParam database.GetTerminationConfigIdByCanTerminatedParams
+	canErr := canParam.Can1Terminated.Scan(ct.Can1Terminated)
+	canErr = canParam.Can2Terminated.Scan(ct.Can2Terminated)
+	canErr = canParam.Can3Terminated.Scan(ct.Can3Terminated)
+	canErr = canParam.Can4Terminated.Scan(ct.Can4Terminated)
+	return canParam, canErr
 }

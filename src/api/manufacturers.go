@@ -10,7 +10,7 @@ import (
 )
 
 func (cnf *ApiConfig) GetAllManufacturers(c *fiber.Ctx) error {
-	allManufacturers, err := cnf.DbQueries.GetAllManufacturers(c.Context())
+	allManufacturers, err := cnf.DbQ.GetAllManufacturers(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
 		return err
@@ -18,13 +18,13 @@ func (cnf *ApiConfig) GetAllManufacturers(c *fiber.Ctx) error {
 
 	var manufacturersJSON []struct {
 		ID   string `json:"id"`
-		Name string    `json:"name"`
+		Name string `json:"name"`
 	}
 
 	for _, manufacturer := range allManufacturers {
 		manufacturersJSON = append(manufacturersJSON, struct {
 			ID   string `json:"id"`
-			Name string    `json:"name"`
+			Name string `json:"name"`
 		}{
 			ID:   manufacturer.ID.String(),
 			Name: manufacturer.Name.String,
@@ -43,13 +43,13 @@ func (cnf *ApiConfig) GetManufacturerById(c *fiber.Ctx) error {
 	}
 
 	uuid, err := uuid.Parse(c.Params("id"))
-	if err != nil {		
+	if err != nil {
 		c.Response().SetStatusCode(404)
 		log.Println("error parsing uuid: ", c.OriginalURL(), "\n", "  error: ", err)
 		return c.SendString("wrong uuid")
 	}
 
-	manufacturerById, err := cnf.DbQueries.GetManufacturerById(c.Context(), uuid)
+	manufacturerById, err := cnf.DbQ.GetManufacturerById(c.Context(), uuid)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			c.Response().SetStatusCode(404)
@@ -57,7 +57,7 @@ func (cnf *ApiConfig) GetManufacturerById(c *fiber.Ctx) error {
 		}
 		c.Response().SetStatusCode(500)
 		log.Println("Error getting manufacturer by id from database: ", err)
-		return err		
+		return err
 	}
 	return c.JSON(manufacturerById)
 }
@@ -65,7 +65,7 @@ func (cnf *ApiConfig) GetManufacturerById(c *fiber.Ctx) error {
 func (cnf *ApiConfig) CreateManufacturer(c *fiber.Ctx) error {
 
 	if c.Get("Content-Type") != "application/json" {
-		c.Response().SetStatusCode(400)	
+		c.Response().SetStatusCode(400)
 		return c.SendString("Content-Type must be application/json")
 	}
 
@@ -77,9 +77,9 @@ func (cnf *ApiConfig) CreateManufacturer(c *fiber.Ctx) error {
 		return err
 	}
 
-	manufacturer, err := cnf.DbQueries.CreateManufacturer(c.Context(), sql.NullString{
+	manufacturer, err := cnf.DbQ.CreateManufacturer(c.Context(), sql.NullString{
 		String: body.Name,
-		Valid:  true,})
+		Valid:  true})
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {

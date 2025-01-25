@@ -2,15 +2,17 @@ package api
 
 import (
 	"log"
+
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/gofiber/fiber/v2")
+)
 
 func (cnf *ApiConfig) GetALLCustomers(c *fiber.Ctx) error {
 
-	allCustomers, err := cnf.DbQueries.GetAllCustomers(c.Context())
+	allCustomers, err := cnf.DbQ.GetAllCustomers(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
-		log.Println("get all customers error:" , err)
+		log.Println("get all customers error:", err)
 		return c.SendString("db error")
 	}
 

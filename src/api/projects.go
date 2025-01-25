@@ -9,10 +9,10 @@ import (
 
 func (cnf *ApiConfig) GetALLProjects(c *fiber.Ctx) error {
 
-	allProjects, err := cnf.DbQueries.GetAllProjects(c.Context())
+	allProjects, err := cnf.DbQ.GetAllProjects(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
-		log.Println("get all projects error:",err)
+		log.Println("get all projects error:", err)
 		return c.SendString("db error")
 	}
 

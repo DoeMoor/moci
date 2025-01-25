@@ -5,5 +5,5 @@ import (
 )
 
 type ApiConfig struct {
-	DbQueries *database.Queries
+	DbQ *database.Queries
 }

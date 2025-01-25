@@ -116,3 +116,22 @@ func (q *Queries) GetAllDisplayTypes(ctx context.Context) ([]string, error) {
 	}
 	return items, nil
 }
+
+const getDisplayAdapterByQR = `-- name: GetDisplayAdapterByQR :one
+select id, display_adapters_type_name, manufacturer_qr_code
+from display_adapters
+where manufacturer_qr_code = $1
+`
+
+type GetDisplayAdapterByQRRow struct {
+	ID                      uuid.UUID      `json:"id"`
+	DisplayAdaptersTypeName sql.NullString `json:"display_adapters_type_name"`
+	ManufacturerQrCode      sql.NullString `json:"manufacturer_qr_code"`
+}
+
+func (q *Queries) GetDisplayAdapterByQR(ctx context.Context, manufacturerQrCode sql.NullString) (GetDisplayAdapterByQRRow, error) {
+	row := q.db.QueryRowContext(ctx, getDisplayAdapterByQR, manufacturerQrCode)
+	var i GetDisplayAdapterByQRRow
+	err := row.Scan(&i.ID, &i.DisplayAdaptersTypeName, &i.ManufacturerQrCode)
+	return i, err
+}

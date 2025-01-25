@@ -251,6 +251,8 @@ CREATE TABLE "enclosure" (
   "manufacturers_id" uuid
 );
 
+CREATE UNIQUE INDEX ON "can_termination_confs" ("can_1_terminated", "can_2_terminated", "can_3_terminated", "can_4_terminated");
+
 CREATE INDEX ON "controller_slot" ("controllers_id", "slot_number");
 
 CREATE UNIQUE INDEX ON "controller_pcb_hw_versions" ("version_number", "revision");

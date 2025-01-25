@@ -1,6 +1,7 @@
 package utility
 
 import (
+	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -14,5 +15,8 @@ func ClearTerminal() {
 		cmd = exec.Command("clear")
 	}
 	cmd.Stdout = os.Stdout
-	cmd.Run()
+	err := cmd.Run()
+	if err != nil {
+		log.Println("Error clearing terminal: ",err)
+	}
 }
