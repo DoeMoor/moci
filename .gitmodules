@@ -1,0 +1,3 @@
+[submodule "moci_front"]
+	path = moci_front
+	url = https://github.com/doemoor/moci_front
