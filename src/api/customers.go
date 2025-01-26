@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (cnf *ApiConfig) GetALLCustomers(c *fiber.Ctx) error {
+func (cnf *ApiCfg) GetALLCustomers(c *fiber.Ctx) error {
 
 	allCustomers, err := cnf.DbQ.GetAllCustomers(c.Context())
 	if err != nil {

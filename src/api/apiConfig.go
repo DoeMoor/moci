@@ -1,9 +1,12 @@
 package api
 
 import (
+	"database/sql"
+
 	"github.com/doemoor/moci/internal/database"
 )
 
-type ApiConfig struct {
+type ApiCfg struct {
 	DbQ *database.Queries
+	DB  *sql.DB
 }

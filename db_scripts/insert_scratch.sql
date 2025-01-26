@@ -62,10 +62,11 @@ insert into display_adapters_type (name)
 values ('av123z7m'),
        ('av123z74');
 
+select * from  display_adapters;
 
 INSERT INTO display_adapters (display_adapters_type_name, manufacturer_qr_code)
 VALUES ('av123z7m', 'GE00000626856'),
-       ('av123z74', 'GE00000623856')
+       ('av123z74', 'GE00000623856');
 ;
 -- RETURNING *;
 -- DELETE FROM display_adapters;
@@ -582,29 +583,24 @@ VALUES ((select id FROM controllers limit 1), (select id FROM io_modules LIMIT 1
 
 
 INSERT INTO customer_projects_junction (customers_id, projects_id)
-VALUES (
-        (select id FROM customers limit 1),
-        (select id FROM projects LIMIT 1)
-       ),(
-        (select id FROM customers limit 1),
-        (select id FROM projects LIMIT 1 offset 2)
-       )
+VALUES ((select id FROM customers limit 1),
+        (select id FROM projects LIMIT 1)),
+       ((select id FROM customers limit 1),
+        (select id FROM projects LIMIT 1 offset 2))
 ;
 -- RETURNING *;
 -- DELETE FROM customer_projects_junction;
 
 
 
-
-begin;
-insert into can_termination_confs (can_1_terminated, can_2_terminated, can_3_terminated,can_4_terminated)
-VALUES(true,true,false,false)
+insert into can_termination_confs (can_1_terminated, can_2_terminated, can_3_terminated, can_4_terminated)
+VALUES (true, true, false, false)
 on conflict (can_1_terminated, can_2_terminated, can_3_terminated,can_4_terminated) do nothing
 returning id;
 
-insert into display_adapters (display_adapters_type_name, manufacturer_qr_code)
-values ('rsta','arstarst')
-on conflict (display_adapters_type_name,manufacturer_qr_code) do update
+-- insert into display_adapters (display_adapters_type_name, manufacturer_qr_code)
+-- values ('rsta', 'arstarst')
+-- on conflict (display_adapters_type_name,manufacturer_qr_code) do update
 
 
 

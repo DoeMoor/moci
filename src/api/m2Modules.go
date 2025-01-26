@@ -20,7 +20,7 @@ type m2ModulesTypeForJson struct {
 	FullName         string `json:"fullName"`
 }
 
-func (cnf *ApiConfig) GetAllm2ModulesType(c *fiber.Ctx) error {
+func (cnf *ApiCfg) GetAllm2ModulesType(c *fiber.Ctx) error {
 	DBm2ModulesTypes, err := cnf.DbQ.GetAllM2ModulesTypes(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
@@ -42,7 +42,7 @@ func (cnf *ApiConfig) GetAllm2ModulesType(c *fiber.Ctx) error {
 	return c.JSON(m2ModulesTypeJson)
 }
 
-func (cnf *ApiConfig) GetAllm2Modules(c *fiber.Ctx) error {
+func (cnf *ApiCfg) GetAllm2Modules(c *fiber.Ctx) error {
 
 	allM2Modules, err := cnf.DbQ.GetAllM2Modules(c.Context())
 	if err != nil {
@@ -68,7 +68,7 @@ func (cnf *ApiConfig) GetAllm2Modules(c *fiber.Ctx) error {
 	return c.JSON(m2ModulesJson)
 }
 
-func (cnf *ApiConfig) Create2Module(c *fiber.Ctx) error {
+func (cnf *ApiCfg) Create2Module(c *fiber.Ctx) error {
 
 	if c.Get("Content-Type") != "application/json" {
 		c.Response().SetStatusCode(400)

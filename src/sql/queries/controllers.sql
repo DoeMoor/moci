@@ -134,6 +134,7 @@ INSERT INTO CONTROLLERS
  SIM_NUMBER,
  MINI_PCIE_MODULES_ID,
  m2_modules_types_id,
+ display_adapters_id,
  ARTICLE_NUMBER,
  info_QR_CODE,
  CAN_TERMINATION_CONFS_ID,
@@ -157,5 +158,6 @@ VALUES ($1,
         $14,
         $15,
         $16,
-        $17)
-returning id;
+        $17,
+        $18)
+returning *;

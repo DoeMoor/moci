@@ -13,14 +13,18 @@ import (
 )
 
 const createEncloser = `-- name: CreateEncloser :one
-insert into enclosure (controller_id,
-                       serial_number,
-                       controller_types_id,
-                       manufacturers_id)
-values ($1, $2, $3, $4)
+insert into
+    enclosure (
+        controller_id,
+        serial_number,
+        controller_types_id,
+        manufacturers_id
+    )
+values
+    ($1, $2, $3, $4)
 on conflict (serial_number) do nothing
 returning
-    id
+    id, controller_id, serial_number, controller_types_id, manufacturers_id
 `
 
 type CreateEncloserParams struct {
@@ -30,26 +34,35 @@ type CreateEncloserParams struct {
 	ManufacturersID   uuid.NullUUID  `json:"manufacturers_id"`
 }
 
-func (q *Queries) CreateEncloser(ctx context.Context, arg CreateEncloserParams) (uuid.UUID, error) {
+func (q *Queries) CreateEncloser(ctx context.Context, arg CreateEncloserParams) (Enclosure, error) {
 	row := q.db.QueryRowContext(ctx, createEncloser,
 		arg.ControllerID,
 		arg.SerialNumber,
 		arg.ControllerTypesID,
 		arg.ManufacturersID,
 	)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i Enclosure
+	err := row.Scan(
+		&i.ID,
+		&i.ControllerID,
+		&i.SerialNumber,
+		&i.ControllerTypesID,
+		&i.ManufacturersID,
+	)
+	return i, err
 }
 
 const getEncloserBySN = `-- name: GetEncloserBySN :one
-select id,
-       controller_id,
-       serial_number,
-       controller_types_id,
-       manufacturers_id
-from enclosure
-where serial_number = $1
+select
+    id,
+    controller_id,
+    serial_number,
+    controller_types_id,
+    manufacturers_id
+from
+    enclosure
+where
+    serial_number = $1
 `
 
 func (q *Queries) GetEncloserBySN(ctx context.Context, serialNumber sql.NullString) (Enclosure, error) {
@@ -66,13 +79,16 @@ func (q *Queries) GetEncloserBySN(ctx context.Context, serialNumber sql.NullStri
 }
 
 const getEncloserId = `-- name: GetEncloserId :one
-select id,
-       controller_id,
-       serial_number,
-       controller_types_id,
-       manufacturers_id
-from enclosure
-where id = $1
+select
+    id,
+    controller_id,
+    serial_number,
+    controller_types_id,
+    manufacturers_id
+from
+    enclosure
+where
+    id = $1
 `
 
 func (q *Queries) GetEncloserId(ctx context.Context, id uuid.UUID) (Enclosure, error) {

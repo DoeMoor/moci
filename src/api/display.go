@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (cnf *ApiConfig) GetAllDisplayTypes(c *fiber.Ctx) error {
+func (cnf *ApiCfg) GetAllDisplayTypes(c *fiber.Ctx) error {
 
 	allDisplay, err := cnf.DbQ.GetAllDisplayTypes(c.Context())
 	if err != nil {

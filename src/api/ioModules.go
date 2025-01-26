@@ -8,7 +8,7 @@ import (
 	// "github.com/doemoor/moci/internal/database"
 )
 
-func (cnf *ApiConfig) GetAllIoModules(c *fiber.Ctx) error {
+func (cnf *ApiCfg) GetAllIoModules(c *fiber.Ctx) error {
 	allIoModules, err := cnf.DbQ.GetAllIoModules(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
@@ -18,7 +18,7 @@ func (cnf *ApiConfig) GetAllIoModules(c *fiber.Ctx) error {
 	return c.JSON(allIoModules)
 }
 
-func (cnf *ApiConfig) GetIoModuleById(c *fiber.Ctx) error {
+func (cnf *ApiCfg) GetIoModuleById(c *fiber.Ctx) error {
 	if c.Params("id") == "" {
 		c.Response().SetStatusCode(404)
 		log.Println(c.OriginalURL(), " id is empty")

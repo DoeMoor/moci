@@ -41,8 +41,9 @@ func main() {
 	defer db.Close()
 
 	// DB Config for handlers
-	var apiConf = &api.ApiConfig{
+	var apiConf = &api.ApiCfg{
 		DbQ: database.New(db),
+		DB:  db,
 	}
 
 	// CHECK ENVIRONMENT VARIABLES

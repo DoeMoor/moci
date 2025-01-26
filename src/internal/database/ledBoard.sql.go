@@ -16,7 +16,7 @@ const createLedBoard = `-- name: CreateLedBoard :one
 insert into led_daughter_board (manufacturer_qr_code, controllers_id)
 values ($1,$2)
 on conflict (manufacturer_qr_code) do nothing
-returning id
+returning id, manufacturer_qr_code, controllers_id, created_at, updated_at, is_deleted
 `
 
 type CreateLedBoardParams struct {
@@ -24,11 +24,18 @@ type CreateLedBoardParams struct {
 	ControllersID      uuid.NullUUID  `json:"controllers_id"`
 }
 
-func (q *Queries) CreateLedBoard(ctx context.Context, arg CreateLedBoardParams) (uuid.UUID, error) {
+func (q *Queries) CreateLedBoard(ctx context.Context, arg CreateLedBoardParams) (LedDaughterBoard, error) {
 	row := q.db.QueryRowContext(ctx, createLedBoard, arg.ManufacturerQrCode, arg.ControllersID)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i LedDaughterBoard
+	err := row.Scan(
+		&i.ID,
+		&i.ManufacturerQrCode,
+		&i.ControllersID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsDeleted,
+	)
+	return i, err
 }
 
 const getLedBoardByQR = `-- name: GetLedBoardByQR :one

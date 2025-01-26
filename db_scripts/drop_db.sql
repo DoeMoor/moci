@@ -34,3 +34,15 @@ DROP TABLE IF EXISTS "controller_types",
     "controller_connector_installed",
     "controllers_pinout",
     "led_daughter_board" CASCADE;
+
+SELECT pid, usename, application_name, state, query_start, backend_start
+FROM pg_stat_activity
+WHERE state = 'active' AND xact_start IS NOT NULL;
+
+SELECT count(*) as active_connections
+FROM pg_stat_activity
+WHERE state = 'active';
+
+SELECT pid, usename, application_name, client_addr, backend_start, state
+FROM pg_stat_activity
+WHERE state IS NOT NULL;

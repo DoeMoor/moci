@@ -64,14 +64,6 @@ npm run buildModule
 
 ---
 
-## ❓ QnA
-
-- **Q:** Are you ahuel?
-  
-  **A:** Yes, I will add the frontend as a Git submodule to the backend... eventually. Also, I plan to add one script for building, launching the app, and initializing the database.
-
----
-
 ## 🗄️ Database Setup
 The following SQL scripts are available:
 

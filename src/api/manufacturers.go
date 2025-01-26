@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (cnf *ApiConfig) GetAllManufacturers(c *fiber.Ctx) error {
+func (cnf *ApiCfg) GetAllManufacturers(c *fiber.Ctx) error {
 	allManufacturers, err := cnf.DbQ.GetAllManufacturers(c.Context())
 	if err != nil {
 		c.Response().SetStatusCode(500)
@@ -34,7 +34,7 @@ func (cnf *ApiConfig) GetAllManufacturers(c *fiber.Ctx) error {
 	return c.JSON(manufacturersJSON)
 }
 
-func (cnf *ApiConfig) GetManufacturerById(c *fiber.Ctx) error {
+func (cnf *ApiCfg) GetManufacturerById(c *fiber.Ctx) error {
 
 	if c.Params("id") == "" {
 		c.Response().SetStatusCode(404)
@@ -62,7 +62,7 @@ func (cnf *ApiConfig) GetManufacturerById(c *fiber.Ctx) error {
 	return c.JSON(manufacturerById)
 }
 
-func (cnf *ApiConfig) CreateManufacturer(c *fiber.Ctx) error {
+func (cnf *ApiCfg) CreateManufacturer(c *fiber.Ctx) error {
 
 	if c.Get("Content-Type") != "application/json" {
 		c.Response().SetStatusCode(400)

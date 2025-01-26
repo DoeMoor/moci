@@ -66,7 +66,8 @@ from orders ord
          left join public.controller_types ct on c.controller_types_id = ct.id
          left join io_module_types iot on im.io_module_types_id = iot.id;
 
-select * from controller_slot;
+select *
+from controller_slot;
 
 SELECT *
 FROM projects;
@@ -111,7 +112,7 @@ SELECT c.id,
        da.display_adapters_type_name as display_type,
        da.manufacturer_qr_code       as display_manufacturer_qr_code,
        c.article_number,
-       c.info_qr_code                     as controller_info_qr_code,
+       c.info_qr_code                as controller_info_qr_code,
        ctc.can_1_terminated,
        ctc.can_2_terminated,
        ctc.can_3_terminated,
@@ -138,6 +139,8 @@ FROM controllers c
          LEFT JOIN controller_pcb_hw_versions_rev pcbrev ON pcbv.revision = pcbrev.revision
          LEFT JOIN mini_pcie_modules_type mpt ON mpcie.mini_pcie_modules_type_id = mpt.id
          left join led_daughter_board ldb on c.id = ldb.controllers_id;
+
+
 
 
 ---
@@ -177,7 +180,21 @@ FROM controller_slot
 WHERE controller_slot.controllers_id = (select id
                                         from controllers
                                         limit 1 OFFSET 1);
-select * from can_termination_confs;
+select *
+from can_termination_confs;
 
-select * from display_adapters;
-select * from display_adapters_type;
+select *
+from display_adapters;
+select *
+from display_adapters_type;
+
+select id
+from can_termination_confs
+where can_1_terminated = true
+  and can_2_terminated = true
+  and can_3_terminated = true
+  and can_4_terminated = true;
+
+select * from enclosure;
+
+select * from mini_pcie_modules;

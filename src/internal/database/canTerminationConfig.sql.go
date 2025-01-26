@@ -12,59 +12,68 @@ import (
 	"github.com/google/uuid"
 )
 
-const createTerminationConfig = `-- name: CreateTerminationConfig :one
+const createCanTerminationConfig = `-- name: CreateCanTerminationConfig :one
 insert into can_termination_confs (can_1_terminated, can_2_terminated, can_3_terminated,can_4_terminated)
 VALUES($1,$2,$3,$4)
 on conflict (can_1_terminated, can_2_terminated, can_3_terminated, can_4_terminated) do nothing
-returning id
+returning id, can_1_terminated, can_3_terminated, can_2_terminated, can_4_terminated, created_at, updated_at, is_deleted
 `
 
-type CreateTerminationConfigParams struct {
+type CreateCanTerminationConfigParams struct {
 	Can1Terminated sql.NullBool `json:"can_1_terminated"`
 	Can2Terminated sql.NullBool `json:"can_2_terminated"`
 	Can3Terminated sql.NullBool `json:"can_3_terminated"`
 	Can4Terminated sql.NullBool `json:"can_4_terminated"`
 }
 
-func (q *Queries) CreateTerminationConfig(ctx context.Context, arg CreateTerminationConfigParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, createTerminationConfig,
+func (q *Queries) CreateCanTerminationConfig(ctx context.Context, arg CreateCanTerminationConfigParams) (CanTerminationConf, error) {
+	row := q.db.QueryRowContext(ctx, createCanTerminationConfig,
 		arg.Can1Terminated,
 		arg.Can2Terminated,
 		arg.Can3Terminated,
 		arg.Can4Terminated,
 	)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i CanTerminationConf
+	err := row.Scan(
+		&i.ID,
+		&i.Can1Terminated,
+		&i.Can3Terminated,
+		&i.Can2Terminated,
+		&i.Can4Terminated,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsDeleted,
+	)
+	return i, err
 }
 
-const getAllTerminationConfig = `-- name: GetAllTerminationConfig :many
-select id, can_1_terminated, can_3_terminated, can_2_terminated, can_4_terminated
+const getAllCanTerminationConfig = `-- name: GetAllCanTerminationConfig :many
+select id, can_1_terminated, can_2_terminated, can_3_terminated, can_4_terminated
 from can_termination_confs
 `
 
-type GetAllTerminationConfigRow struct {
+type GetAllCanTerminationConfigRow struct {
 	ID             uuid.UUID    `json:"id"`
 	Can1Terminated sql.NullBool `json:"can_1_terminated"`
-	Can3Terminated sql.NullBool `json:"can_3_terminated"`
 	Can2Terminated sql.NullBool `json:"can_2_terminated"`
+	Can3Terminated sql.NullBool `json:"can_3_terminated"`
 	Can4Terminated sql.NullBool `json:"can_4_terminated"`
 }
 
-func (q *Queries) GetAllTerminationConfig(ctx context.Context) ([]GetAllTerminationConfigRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllTerminationConfig)
+func (q *Queries) GetAllCanTerminationConfig(ctx context.Context) ([]GetAllCanTerminationConfigRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllCanTerminationConfig)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetAllTerminationConfigRow
+	var items []GetAllCanTerminationConfigRow
 	for rows.Next() {
-		var i GetAllTerminationConfigRow
+		var i GetAllCanTerminationConfigRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Can1Terminated,
-			&i.Can3Terminated,
 			&i.Can2Terminated,
+			&i.Can3Terminated,
 			&i.Can4Terminated,
 		); err != nil {
 			return nil, err

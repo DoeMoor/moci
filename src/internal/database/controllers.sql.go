@@ -25,6 +25,7 @@ INSERT INTO CONTROLLERS
  SIM_NUMBER,
  MINI_PCIE_MODULES_ID,
  m2_modules_types_id,
+ display_adapters_id,
  ARTICLE_NUMBER,
  info_QR_CODE,
  CAN_TERMINATION_CONFS_ID,
@@ -48,8 +49,9 @@ VALUES ($1,
         $14,
         $15,
         $16,
-        $17)
-returning id
+        $17,
+        $18)
+returning id, controller_types_id, projects_id, description, controllers_pcb_hw_versions_id, pcb_version_number, serial_number, manufacturers_id, assembly_date, mac_address, sim_number, mini_pcie_modules_id, m2_modules_types_id, display_adapters_id, article_number, info_qr_code, can_termination_confs_id, usb, serial, manufacturer_qr_code, order_id, created_at, updated_at, is_deleted
 `
 
 type CreateControllerParams struct {
@@ -63,6 +65,7 @@ type CreateControllerParams struct {
 	SimNumber                  sql.NullString `json:"sim_number"`
 	MiniPcieModulesID          uuid.NullUUID  `json:"mini_pcie_modules_id"`
 	M2ModulesTypesID           uuid.NullUUID  `json:"m2_modules_types_id"`
+	DisplayAdaptersID          uuid.NullUUID  `json:"display_adapters_id"`
 	ArticleNumber              sql.NullString `json:"article_number"`
 	InfoQrCode                 sql.NullString `json:"info_qr_code"`
 	CanTerminationConfsID      uuid.NullUUID  `json:"can_termination_confs_id"`
@@ -72,7 +75,7 @@ type CreateControllerParams struct {
 	OrderID                    uuid.NullUUID  `json:"order_id"`
 }
 
-func (q *Queries) CreateController(ctx context.Context, arg CreateControllerParams) (uuid.UUID, error) {
+func (q *Queries) CreateController(ctx context.Context, arg CreateControllerParams) (Controller, error) {
 	row := q.db.QueryRowContext(ctx, createController,
 		arg.ControllerTypesID,
 		arg.ProjectsID,
@@ -84,6 +87,7 @@ func (q *Queries) CreateController(ctx context.Context, arg CreateControllerPara
 		arg.SimNumber,
 		arg.MiniPcieModulesID,
 		arg.M2ModulesTypesID,
+		arg.DisplayAdaptersID,
 		arg.ArticleNumber,
 		arg.InfoQrCode,
 		arg.CanTerminationConfsID,
@@ -92,9 +96,34 @@ func (q *Queries) CreateController(ctx context.Context, arg CreateControllerPara
 		arg.ManufacturerQrCode,
 		arg.OrderID,
 	)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i Controller
+	err := row.Scan(
+		&i.ID,
+		&i.ControllerTypesID,
+		&i.ProjectsID,
+		&i.Description,
+		&i.ControllersPcbHwVersionsID,
+		&i.PcbVersionNumber,
+		&i.SerialNumber,
+		&i.ManufacturersID,
+		&i.AssemblyDate,
+		&i.MacAddress,
+		&i.SimNumber,
+		&i.MiniPcieModulesID,
+		&i.M2ModulesTypesID,
+		&i.DisplayAdaptersID,
+		&i.ArticleNumber,
+		&i.InfoQrCode,
+		&i.CanTerminationConfsID,
+		&i.Usb,
+		&i.Serial,
+		&i.ManufacturerQrCode,
+		&i.OrderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsDeleted,
+	)
+	return i, err
 }
 
 const getALLControllerTypes = `-- name: GetALLControllerTypes :many
