@@ -105,17 +105,3 @@ type NewControllerJson struct {
 	LedBoardID     uuid.UUID        `json:"ledBoardId"`
 }
 
-// func GetControllerById(controllerId uuid.UUID, cnf , c *fiber.Ctx) (*NewControllerJson, error) {
-// 	controllerById, err := cnf.DbQ.GetControllerById(c.Context(), uuid)
-// 	if err != nil {
-// 		if err.Error() == "sql: no rows in result set" {
-// 			c.Response().SetStatusCode(404)
-// 			return c.SendString("controller not found")
-// 		}
-// 		c.Response().SetStatusCode(500)
-// 		log.Println("Error getting controller by id from database: ", err)
-// 		return err
-// 	}
-// }
-
-// func DBcontrollerToJson

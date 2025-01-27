@@ -43,21 +43,14 @@ func (cnf *ApiCfg) GetControllerById(c *fiber.Ctx) error {
 		return c.SendString("wrong uuid")
 	}
 
-	controllerById, err := cnf.DbQ.GetControllerById(c.Context(), uuid)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			c.Response().SetStatusCode(404)
-			return c.SendString("controller not found")
-		}
-		c.Response().SetStatusCode(500)
-		log.Println("Error getting controller by id from database: ", err)
+	controllerJson, shouldReturn, err := controllerByID(cnf, c, uuid)
+	if shouldReturn {
 		return err
 	}
 
-	controllerJson := mapOneControllerToJson(controllerById)
-
 	return c.JSON(controllerJson)
 }
+
 
 
 
@@ -296,18 +289,10 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 		return err
 	}
 
-	controllerById, err := cnf.DbQ.GetControllerById(c.Context(), newController.Id)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			c.Response().SetStatusCode(404)
-			return c.SendString("controller not found")
-		}
-		c.Response().SetStatusCode(500)
-		log.Println("Error getting controller by id from database: ", err)
+	controllerJson, shouldReturn, err := controllerByID(cnf, c, newController.Id)
+	if shouldReturn {
 		return err
 	}
-
-	controllerJson := mapOneControllerToJson(controllerById)
 
 	return c.JSON(controllerJson)
 }
@@ -569,4 +554,20 @@ func validateNewEncloserParams(newEncloser pkg.Encloser, controllerId uuid.UUID,
 	newEncloserErr = newEncloserParams.ControllerTypesID.Scan(controllerTypeId.String())
 	newEncloserErr = newEncloserParams.ManufacturersID.Scan(newEncloser.ManufacturerID.String())
 	return newEncloserParams, newEncloserErr
+}
+
+func controllerByID(cnf *ApiCfg, c *fiber.Ctx, uuid uuid.UUID) (pkg.DBControllerToJsonResponse, bool, error) {
+	controllerById, err := cnf.DbQ.GetControllerById(c.Context(), uuid)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			c.Response().SetStatusCode(404)
+			return pkg.DBControllerToJsonResponse{}, true, c.SendString("controller not found")
+		}
+		c.Response().SetStatusCode(500)
+		log.Println("Error getting controller by id from database: ", err)
+		return pkg.DBControllerToJsonResponse{}, true, err
+	}
+
+	controllerJson := mapOneControllerToJson(controllerById)
+	return controllerJson, false, nil
 }

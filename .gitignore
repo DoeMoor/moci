@@ -1,0 +1,5 @@
+_build
+.vscode
+.env
+db_scripts/.idea
+web
