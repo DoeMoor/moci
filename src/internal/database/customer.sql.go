@@ -13,7 +13,8 @@ import (
 )
 
 const getAllCustomers = `-- name: GetAllCustomers :many
-select id, customers.name from customers
+select id, customers.name
+from customers
 `
 
 type GetAllCustomersRow struct {
@@ -47,8 +48,8 @@ func (q *Queries) GetAllCustomers(ctx context.Context) ([]GetAllCustomersRow, er
 const getAllCustomersWithProjects = `-- name: GetAllCustomersWithProjects :many
 select c.id, c.name, pj.name
 from customers c
-left join customer_projects_junction cpj on c.id = cpj.customers_id
-left join projects pj on cpj.projects_id = pj.id
+         left join customer_projects_junction cpj on c.id = cpj.customers_id
+         left join projects pj on cpj.projects_id = pj.id
 `
 
 type GetAllCustomersWithProjectsRow struct {
@@ -80,11 +81,62 @@ func (q *Queries) GetAllCustomersWithProjects(ctx context.Context) ([]GetAllCust
 	return items, nil
 }
 
+const getAllOrders = `-- name: GetAllOrders :many
+select c.name as customer_name, ord.id, ord.customers_id, ord.notes, ord.delivery_date, ord.invoice_number, ord.created_at, ord.updated_at, ord.is_deleted
+from orders ord
+         left join public.customers c on c.id = ord.customers_id
+`
+
+type GetAllOrdersRow struct {
+	CustomerName  sql.NullString `json:"customer_name"`
+	ID            uuid.UUID      `json:"id"`
+	CustomersID   uuid.NullUUID  `json:"customers_id"`
+	Notes         sql.NullString `json:"notes"`
+	DeliveryDate  sql.NullTime   `json:"delivery_date"`
+	InvoiceNumber sql.NullString `json:"invoice_number"`
+	CreatedAt     sql.NullTime   `json:"created_at"`
+	UpdatedAt     sql.NullTime   `json:"updated_at"`
+	IsDeleted     sql.NullBool   `json:"is_deleted"`
+}
+
+func (q *Queries) GetAllOrders(ctx context.Context) ([]GetAllOrdersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllOrders)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllOrdersRow
+	for rows.Next() {
+		var i GetAllOrdersRow
+		if err := rows.Scan(
+			&i.CustomerName,
+			&i.ID,
+			&i.CustomersID,
+			&i.Notes,
+			&i.DeliveryDate,
+			&i.InvoiceNumber,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.IsDeleted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCustomerWithProjects = `-- name: GetCustomerWithProjects :many
 select c.id, c.name, pj.name
 from customers c
-left join customer_projects_junction cpj on c.id = cpj.customers_id
-left join projects pj on cpj.projects_id = pj.id
+         left join customer_projects_junction cpj on c.id = cpj.customers_id
+         left join projects pj on cpj.projects_id = pj.id
 where c.id = $1
 `
 

@@ -4,47 +4,46 @@ import (
 	"encoding/json"
 	"time"
 
-
 	"github.com/google/uuid"
 )
 
-type DBControllerToJsonResponse struct {
-	ID                            string          `json:"id"`
-	ControllerTypeName            string          `json:"controllerTypeName"`
-	IoModuleSocketAmount          int             `json:"ioModuleSocketAmount"`
-	ProjectName                   string          `json:"projectName"`
-	Description                   string          `json:"description"`
-	PcbHwVersion                  string          `json:"pcbHwVersion"`
-	PcbVersionNumber              int             `json:"pcbVersionNumber"`
-	ControllerSerialNumber        string          `json:"controllerSerialNumber"`
-	ManufacturerName              string          `json:"manufacturerName"`
-	AssemblyDate                  time.Time       `json:"assemblyDate"`
-	MacAddress                    string          `json:"macAddress"`
-	SimNumber                     string          `json:"simNumber"`
-	EncloserSerialNumber          string          `json:"encloserSerialNumber"`
-	EncloserManufacturerName      string          `json:"encloserManufacturerName"`
-	MiniPcieModulesName           string          `json:"miniPcieModulesName"`
-	MiniPcieModuleTypeNumber      int             `json:"miniPcieModuleTypeNumber"`
-	MiniPcieSerialNumber          string          `json:"miniPcieSerialNumber"`
-	M2ModuleName                  string          `json:"m2ModuleName"`
-	M2ModuleTypeNumber            int             `json:"m2ModuleTypeNumber"`
-	LedBoard                      string          `json:"ledBoard"`
-	DisplayType                   string          `json:"displayType"`
-	DisplayManufacturerQrCode     string          `json:"displayManufacturerQrCode"`
-	ArticleNumber                 string          `json:"articleNumber"`
-	ControllerInfoQrCode          string          `json:"controllerInfoQrCode"`
-	Can1Terminated                bool            `json:"can1Terminated"`
-	Can2Terminated                bool            `json:"can2Terminated"`
-	Can3Terminated                bool            `json:"can3Terminated"`
-	Can4Terminated                bool            `json:"can4Terminated"`
-	Usb                           bool            `json:"usb"`
-	Serial                        bool            `json:"serial"`
-	ControllerManufacturerQrCodes string          `json:"controllerManufacturerQrCodes"`
-	OrderID                       uuid.UUID       `json:"orderId"`
-	CreatedAt                     time.Time       `json:"createdAt"`
-	UpdatedAt                     time.Time       `json:"updatedAt"`
-	IsDeleted                     bool            `json:"isDeleted"`
-	SlotPinoutJson                json.RawMessage `json:"slotPinoutJson"`
+type DBControllerJsonToFrontend struct {
+	ID                        string          `json:"id"`
+	TypeName                  string          `json:"typeName"`
+	IoModuleSocketAmount      int             `json:"ioModuleSocketAmount"`
+	ProjectName               string          `json:"projectName"`
+	Description               string          `json:"description"`
+	PcbHwVersion              string          `json:"pcbHwVersion"`
+	PcbVersionNumber          int             `json:"pcbVersionNumber"`
+	SerialNumber              string          `json:"serialNumber"`
+	ManufacturerName          string          `json:"manufacturerName"`
+	AssemblyDate              time.Time       `json:"assemblyDate"`
+	MacAddress                string          `json:"macAddress"`
+	SimNumber                 string          `json:"simNumber"`
+	EncloserSerialNumber      string          `json:"encloserSerialNumber"`
+	EncloserManufacturerName  string          `json:"encloserManufacturerName"`
+	MiniPcieModulesName       string          `json:"miniPcieModulesName"`
+	MiniPcieModuleTypeNumber  int             `json:"miniPcieModuleTypeNumber"`
+	MiniPcieSerialNumber      string          `json:"miniPcieSerialNumber"`
+	M2ModuleName              string          `json:"m2ModuleName"`
+	M2ModuleTypeNumber        int             `json:"m2ModuleTypeNumber"`
+	LedBoardQrCode            string          `json:"ledBoardQrCode"`
+	DisplayType               string          `json:"displayType"`
+	DisplayManufacturerQrCode string          `json:"displayManufacturerQrCode"`
+	ArticleNumber             string          `json:"articleNumber"`
+	InfoQrCode                string          `json:"infoQrCode"`
+	Can1Terminated            bool            `json:"can1Terminated"`
+	Can2Terminated            bool            `json:"can2Terminated"`
+	Can3Terminated            bool            `json:"can3Terminated"`
+	Can4Terminated            bool            `json:"can4Terminated"`
+	Usb                       bool            `json:"usb"`
+	Serial                    bool            `json:"serial"`
+	ManufacturerQrCodes       string          `json:"manufacturerQrCodes"`
+	OrderID                   uuid.UUID       `json:"orderId"`
+	CreatedAt                 time.Time       `json:"createdAt"`
+	UpdatedAt                 time.Time       `json:"updatedAt"`
+	IsDeleted                 bool            `json:"isDeleted"`
+	SlotPinoutJson            json.RawMessage `json:"slotPinoutJson"`
 }
 type AddNewController struct {
 	TypesID            uuid.UUID `json:"typesId"`
@@ -105,3 +104,39 @@ type NewControllerJson struct {
 	LedBoardID     uuid.UUID        `json:"ledBoardId"`
 }
 
+type NewControllerJsonFromFrontend struct {
+	Id                        uuid.UUID `json:"id"`
+	CustomerID                uuid.UUID `json:"customerId"`
+	TypesID                   uuid.UUID `json:"typesId"`
+	ProjectsID                uuid.UUID `json:"projectsId"`
+	Description               *string   `json:"description"`
+	PcbHwVersionsID           uuid.UUID `json:"pcbHwVersionsId"`
+	SerialNumber              string    `json:"serialNumber"`
+	ManufacturersID           uuid.UUID `json:"manufacturersId"`
+	MacAddress                string    `json:"macAddress"`
+	SimNumber                 *string   `json:"simNumber"`
+	M2ModulesTypesID          uuid.UUID `json:"m2ModulesTypesId"`
+	ArticleNumber             *string   `json:"articleNumber"`
+	InfoQrCode                *string   `json:"infoQrCode"`
+	Usb                       bool      `json:"usb"`
+	Serial                    bool      `json:"serial"`
+	ManufacturerQrCode        *string   `json:"manufacturerQrCode"`
+	OrderID                   uuid.UUID `json:"orderId"`
+	AssemblyDate              string    `json:"assemblyDate"`
+	CanTerminationID          uuid.UUID `json:"canTerminationId"`
+	Can1Terminated            bool      `json:"can1Terminated"`
+	Can2Terminated            bool      `json:"can2Terminated"`
+	Can3Terminated            bool      `json:"can3Terminated"`
+	Can4Terminated            bool      `json:"can4Terminated"`
+	DisplayId                 uuid.UUID `json:"displayId"`
+	DisplayTypeName           string    `json:"displayTypeName"`
+	DisplayManufacturerQrCode string    `json:"displayManufacturerQrCode"`
+	EncloserID                uuid.UUID `json:"encloserId"`
+	EncloserManufacturerID    uuid.UUID `json:"encloserManufacturerId"`
+	EncloserSerialNumber      string    `json:"encloserSerialNumber"`
+	MiniPcieID                uuid.UUID `json:"miniPcieId"`
+	MiniPcieTypeID            uuid.UUID `json:"miniPcieTypeId"`
+	MiniPcieSerialNumber      string    `json:"miniPcieSerialNumber"`
+	LedBoardID                uuid.UUID `json:"ledBoardId"`
+	LedBoardQrCode            string    `json:"ledBoardQrCode"`
+}

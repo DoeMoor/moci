@@ -26,8 +26,6 @@ func (cnf *ApiCfg) GetAllControllers(c *fiber.Ctx) error {
 	return c.JSON(allControllerJson)
 }
 
-
-
 func (cnf *ApiCfg) GetControllerById(c *fiber.Ctx) error {
 
 	if c.Params("id") == "" {
@@ -50,9 +48,6 @@ func (cnf *ApiCfg) GetControllerById(c *fiber.Ctx) error {
 
 	return c.JSON(controllerJson)
 }
-
-
-
 
 func (cnf *ApiCfg) GetAllControllerTypes(c *fiber.Ctx) error {
 
@@ -156,7 +151,7 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 		return c.SendString("Content-Type must be application/json")
 	}
 
-	var newController pkg.NewControllerJson
+	var newController pkg.NewControllerJsonFromFrontend
 
 	if err := c.BodyParser(&newController); err != nil {
 		log.Println("CreateController - BodyParser error: ", err)
@@ -167,7 +162,7 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 	//begin assembly of new controller object
 
 	// validate controller can termination
-	canParam, canErr := validateCanTerminationConfParam(newController.CanTermination)
+	canParam, canErr := validateCanTerminationConfParam(newController)
 	if canErr != nil {
 		log.Println("CreateController - pkg.CanTermination error: ", canErr)
 		c.Response().SetStatusCode(400)
@@ -182,8 +177,9 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 			return c.SendString("Can termination parse error")
 		}
 	}
+	// no config found create new
 	if canTerminationID.String() != "00000000-0000-0000-0000-000000000000" {
-		newController.CanTermination.Id = canTerminationID
+		newController.CanTerminationID = canTerminationID
 	} else {
 		newCanTerminationId, err := cnf.DbQ.CreateCanTerminationConfig(c.Context(), database.CreateCanTerminationConfigParams{
 			Can1Terminated: canParam.Can1Terminated,
@@ -196,12 +192,12 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 			c.Response().SetStatusCode(400)
 			return c.SendString("Can termination parse error")
 		}
-		newController.CanTermination.Id = newCanTerminationId.ID
+		newController.CanTerminationID = newCanTerminationId.ID
 	}
 
 	// check if display is present in db
 	var displaySN sql.NullString
-	if err := displaySN.Scan(newController.Display.ManufacturerQrCode); err != nil {
+	if err := displaySN.Scan(newController.DisplayManufacturerQrCode); err != nil {
 		log.Println("CreateController - Display parse error: ", err)
 		c.Response().SetStatusCode(400)
 		return c.SendString("Display parse error")
@@ -222,7 +218,7 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 
 	// check if encloser is present in db
 	var encloserSN sql.NullString
-	if err := encloserSN.Scan(newController.Encloser.SerialNumber); err != nil {
+	if err := encloserSN.Scan(newController.EncloserSerialNumber); err != nil {
 		log.Println("CreateController - Encloser parse error: ", err)
 		c.Response().SetStatusCode(400)
 		return c.SendString("Encloser parse error")
@@ -243,7 +239,7 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 
 	// check if miniPcie is present in db
 	var miniPcieSN sql.NullString
-	if err := miniPcieSN.Scan(newController.MiniPcie.SerialNumber); err != nil {
+	if err := miniPcieSN.Scan(newController.MiniPcieSerialNumber); err != nil {
 		log.Println("CreateController - pkg.MiniPcie parse error: ", err)
 		c.Response().SetStatusCode(400)
 		return c.SendString("pkg.MiniPcie parse error")
@@ -286,18 +282,22 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 	// start transaction
 	shouldReturn, err := controllerTransaction(cnf, c, &newController, ledBoardQR)
 	if shouldReturn {
-		return err
+		log.Println("CreateController - controllerTransaction error: ", err)
+		return c.JSON(newController)
 	}
 
 	controllerJson, shouldReturn, err := controllerByID(cnf, c, newController.Id)
 	if shouldReturn {
-		return err
+		log.Println("CreateController - New controllerByID error: ", err)
+		return c.JSON(newController)
 	}
+
+
 
 	return c.JSON(controllerJson)
 }
 
-func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewControllerJson, ledBoardQR sql.NullString) (bool, error) {
+func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewControllerJsonFromFrontend, ledBoardQR sql.NullString) (bool, error) {
 	tx, err := cnf.DB.Begin()
 	if err != nil {
 		log.Println("CreateController - Transaction error: ", err)
@@ -308,7 +308,7 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 	qtx := cnf.DbQ.WithTx(tx)
 
 	// try to create display
-	newDisplayParam, err := validateNewDisplayParams(newController.Display)
+	newDisplayParam, err := validateNewDisplayParams(*newController)
 	if err != nil {
 		log.Println("CreateController - validateNewDisplayParams error: ", err)
 		c.Response().SetStatusCode(400)
@@ -320,12 +320,10 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 		c.Response().SetStatusCode(400)
 		return true, c.SendString("CreateDisplayAdapter error")
 	}
-	newController.Display.Id = newDisplay.ID
-	newController.Display.ManufacturerQrCode = newDisplay.ManufacturerQrCode.String
-	newController.Display.TypeID = newDisplay.DisplayAdaptersTypeName.String
+	newController.DisplayId = newDisplay.ID
 
 	// try to create miniPcie
-	newMiniPcieParam, err := validateNewMiniPcieParams(newController.MiniPcie)
+	newMiniPcieParam, err := validateNewMiniPcieParams(*newController)
 	if err != nil {
 		log.Println("CreateController - validateNewMiniPcieParams error: ", err)
 		c.Response().SetStatusCode(400)
@@ -337,9 +335,7 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 		c.Response().SetStatusCode(400)
 		return true, c.SendString("CreateMiniPcieModule error")
 	}
-	newController.MiniPcie.Id = newMiniPcie.ID
-	newController.MiniPcie.TypeID = newMiniPcie.MiniPcieModulesTypeID.UUID.String()
-	newController.MiniPcie.SerialNumber = newMiniPcie.SerialNumber.String
+	newController.MiniPcieID = newMiniPcie.ID
 
 	// try to create controller
 	controllerParam, err := validateNewControllerParams(*newController)
@@ -372,9 +368,7 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 	newController.LedBoardID = newLedBoard.ID
 
 	// try to create encloser
-	newEncloserParam, err := validateNewEncloserParams(newController.Encloser,
-		newController.Id,
-		newController.Controller.TypesID)
+	newEncloserParam, err := validateNewEncloserParams(*newController)
 	if err != nil {
 		log.Println("CreateController - validateNewEncloserParams error: ", err)
 		c.Response().SetStatusCode(400)
@@ -386,11 +380,7 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 		c.Response().SetStatusCode(400)
 		return true, c.SendString("Encloser parse error")
 	}
-	newController.Encloser.Id = newEncloser.ID
-	newController.Encloser.ControllerID = newEncloser.ControllerID.UUID
-	newController.Encloser.TypeID = newEncloser.ControllerTypesID.UUID.String()
-	newController.Encloser.ManufacturerID = newEncloser.ManufacturersID.UUID
-	newController.Encloser.SerialNumber = newEncloser.SerialNumber.String
+	newController.EncloserID = newEncloser.ID
 
 	commitErr := tx.Commit()
 	if commitErr != nil {
@@ -399,175 +389,175 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 	return false, nil
 }
 
-func mapOneControllerToJson(controllerById database.GetControllerByIdRow) pkg.DBControllerToJsonResponse {
-	controllerJson := pkg.DBControllerToJsonResponse{
-		ID:                            controllerById.ID.String(),
-		ControllerTypeName:            controllerById.ControllerTypeName.String,
-		IoModuleSocketAmount:          int(controllerById.IoModuleSocketAmount.Int32),
-		ProjectName:                   controllerById.ProjectName.String,
-		Description:                   controllerById.Description.String,
-		PcbHwVersion:                  controllerById.PcbHwVersion.(string),
-		PcbVersionNumber:              int(controllerById.PcbVersionNumber.Int32),
-		ControllerSerialNumber:        controllerById.ControllerSerialNumber.String,
-		ManufacturerName:              controllerById.ManufacturerName.String,
-		AssemblyDate:                  controllerById.AssemblyDate.Time,
-		MacAddress:                    controllerById.MacAddress.String,
-		SimNumber:                     controllerById.SimNumber.String,
-		MiniPcieModulesName:           controllerById.MiniPcieModulesName.String,
-		MiniPcieModuleTypeNumber:      int(controllerById.MiniPcieModuleTypeNumber.Int32),
-		MiniPcieSerialNumber:          controllerById.MiniPcieSerialNumber.String,
-		M2ModuleName:                  controllerById.M2ModuleName.String,
-		M2ModuleTypeNumber:            int(controllerById.M2ModuleTypeNumber.Int32),
-		LedBoard:                      controllerById.LedBoard.String,
-		DisplayType:                   controllerById.DisplayType.String,
-		DisplayManufacturerQrCode:     controllerById.DisplayManufacturerQrCode.String,
-		ArticleNumber:                 controllerById.ArticleNumber.String,
-		ControllerInfoQrCode:          controllerById.ControllerInfoQrCode.String,
-		Can1Terminated:                controllerById.Can1Terminated.Bool,
-		Can2Terminated:                controllerById.Can2Terminated.Bool,
-		Can3Terminated:                controllerById.Can3Terminated.Bool,
-		Can4Terminated:                controllerById.Can4Terminated.Bool,
-		Usb:                           controllerById.Usb.Bool,
-		Serial:                        controllerById.Serial.Bool,
-		ControllerManufacturerQrCodes: controllerById.ControllerManufacturerQrCode.String,
-		OrderID:                       controllerById.OrderID.UUID,
-		CreatedAt:                     controllerById.CreatedAt.Time,
-		UpdatedAt:                     controllerById.UpdatedAt.Time,
-		IsDeleted:                     controllerById.IsDeleted.Bool,
-		SlotPinoutJson:                controllerById.SlotPinoutJson.RawMessage,
+func controllerByID(cnf *ApiCfg, c *fiber.Ctx, uuid uuid.UUID) (pkg.DBControllerJsonToFrontend, bool, error) {
+	controllerById, err := cnf.DbQ.GetControllerById(c.Context(), uuid)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			c.Response().SetStatusCode(404)
+			return pkg.DBControllerJsonToFrontend{}, true, c.SendString("controller not found")
+		}
+		c.Response().SetStatusCode(500)
+		log.Println("Error getting controller by id from database: ", err)
+		return pkg.DBControllerJsonToFrontend{}, true, err
+	}
+
+	controllerJson := mapOneControllerToJson(controllerById)
+	return controllerJson, false, nil
+}
+
+func mapOneControllerToJson(controllerById database.GetControllerByIdRow) pkg.DBControllerJsonToFrontend {
+	controllerJson := pkg.DBControllerJsonToFrontend{
+		ID:                        controllerById.ID.String(),
+		TypeName:                  controllerById.TypeName.String,
+		IoModuleSocketAmount:      int(controllerById.IoModuleSocketAmount.Int32),
+		ProjectName:               controllerById.ProjectName.String,
+		Description:               controllerById.Description.String,
+		PcbHwVersion:              controllerById.PcbHwVersion.(string),
+		PcbVersionNumber:          int(controllerById.PcbVersionNumber.Int32),
+		SerialNumber:              controllerById.SerialNumber.String,
+		ManufacturerName:          controllerById.ManufacturerName.String,
+		AssemblyDate:              controllerById.AssemblyDate.Time,
+		MacAddress:                controllerById.MacAddress.String,
+		SimNumber:                 controllerById.SimNumber.String,
+		EncloserSerialNumber:      controllerById.EnclosureSerialNumber.String,
+		EncloserManufacturerName:  controllerById.EnclosureManufacturer.String,
+		MiniPcieModulesName:       controllerById.MiniPcieModulesName.String,
+		MiniPcieModuleTypeNumber:  int(controllerById.MiniPcieModuleTypeNumber.Int32),
+		MiniPcieSerialNumber:      controllerById.MiniPcieSerialNumber.String,
+		M2ModuleName:              controllerById.M2ModuleName.String,
+		M2ModuleTypeNumber:        int(controllerById.M2ModuleTypeNumber.Int32),
+		LedBoardQrCode:            controllerById.LedBoardQrCode.String,
+		DisplayType:               controllerById.DisplayType.String,
+		DisplayManufacturerQrCode: controllerById.DisplayManufacturerQrCode.String,
+		ArticleNumber:             controllerById.ArticleNumber.String,
+		InfoQrCode:                controllerById.InfoQrCode.String,
+		Can1Terminated:            controllerById.Can1Terminated.Bool,
+		Can2Terminated:            controllerById.Can2Terminated.Bool,
+		Can3Terminated:            controllerById.Can3Terminated.Bool,
+		Can4Terminated:            controllerById.Can4Terminated.Bool,
+		Usb:                       controllerById.Usb.Bool,
+		Serial:                    controllerById.Serial.Bool,
+		ManufacturerQrCodes:       controllerById.ManufacturerQrCode.String,
+		OrderID:                   controllerById.OrderID.UUID,
+		CreatedAt:                 controllerById.CreatedAt.Time,
+		UpdatedAt:                 controllerById.UpdatedAt.Time,
+		IsDeleted:                 controllerById.IsDeleted.Bool,
+		SlotPinoutJson:            controllerById.SlotPinoutJson.RawMessage,
 	}
 	return controllerJson
 }
 
-func mapControllersToJson(allController []database.GetAllControllersRow) []pkg.DBControllerToJsonResponse {
-	var controllersJson []pkg.DBControllerToJsonResponse
+func mapControllersToJson(allController []database.GetAllControllersRow) []pkg.DBControllerJsonToFrontend {
+	var controllersJson []pkg.DBControllerJsonToFrontend
 
 	for _, controller := range allController {
-		controllersJson = append(controllersJson, pkg.DBControllerToJsonResponse{
-			ID:                            controller.ID.String(),
-			ControllerTypeName:            controller.ControllerTypeName.String,
-			IoModuleSocketAmount:          int(controller.IoModuleSocketAmount.Int32),
-			ProjectName:                   controller.ProjectName.String,
-			Description:                   controller.Description.String,
-			PcbHwVersion:                  controller.PcbHwVersion.(string),
-			PcbVersionNumber:              int(controller.PcbVersionNumber.Int32),
-			ControllerSerialNumber:        controller.ControllerSerialNumber.String,
-			ManufacturerName:              controller.ManufacturerName.String,
-			AssemblyDate:                  controller.AssemblyDate.Time,
-			MacAddress:                    controller.MacAddress.String,
-			SimNumber:                     controller.SimNumber.String,
-			EncloserSerialNumber:          controller.EnclosureSerialNumber.String,
-			EncloserManufacturerName:      controller.EnclosureManufacturer.String,
-			MiniPcieModulesName:           controller.MiniPcieModulesName.String,
-			MiniPcieModuleTypeNumber:      int(controller.MiniPcieModuleTypeNumber.Int32),
-			MiniPcieSerialNumber:          controller.MiniPcieSerialNumber.String,
-			M2ModuleName:                  controller.M2ModuleName.String,
-			M2ModuleTypeNumber:            int(controller.M2ModuleTypeNumber.Int32),
-			LedBoard:                      controller.LedBoard.String,
-			DisplayType:                   controller.DisplayType.String,
-			DisplayManufacturerQrCode:     controller.DisplayManufacturerQrCode.String,
-			ArticleNumber:                 controller.ArticleNumber.String,
-			ControllerInfoQrCode:          controller.ControllerInfoQrCode.String,
-			Can1Terminated:                controller.Can1Terminated.Bool,
-			Can2Terminated:                controller.Can2Terminated.Bool,
-			Can3Terminated:                controller.Can3Terminated.Bool,
-			Can4Terminated:                controller.Can4Terminated.Bool,
-			Usb:                           controller.Usb.Bool,
-			Serial:                        controller.Serial.Bool,
-			ControllerManufacturerQrCodes: controller.ControllerManufacturerQrCode.String,
-			OrderID:                       controller.OrderID.UUID,
-			CreatedAt:                     controller.CreatedAt.Time,
-			UpdatedAt:                     controller.UpdatedAt.Time,
-			SlotPinoutJson:                controller.SlotPinoutJson.RawMessage,
-			IsDeleted:                     controller.IsDeleted.Bool,
+		controllersJson = append(controllersJson, pkg.DBControllerJsonToFrontend{
+			ID:                        controller.ID.String(),
+			TypeName:                  controller.TypeName.String,
+			IoModuleSocketAmount:      int(controller.IoModuleSocketAmount.Int32),
+			ProjectName:               controller.ProjectName.String,
+			Description:               controller.Description.String,
+			PcbHwVersion:              controller.PcbHwVersion.(string),
+			PcbVersionNumber:          int(controller.PcbVersionNumber.Int32),
+			SerialNumber:              controller.SerialNumber.String,
+			ManufacturerName:          controller.ManufacturerName.String,
+			AssemblyDate:              controller.AssemblyDate.Time,
+			MacAddress:                controller.MacAddress.String,
+			SimNumber:                 controller.SimNumber.String,
+			EncloserSerialNumber:      controller.EnclosureSerialNumber.String,
+			EncloserManufacturerName:  controller.EnclosureManufacturer.String,
+			MiniPcieModulesName:       controller.MiniPcieModulesName.String,
+			MiniPcieModuleTypeNumber:  int(controller.MiniPcieModuleTypeNumber.Int32),
+			MiniPcieSerialNumber:      controller.MiniPcieSerialNumber.String,
+			M2ModuleName:              controller.M2ModuleName.String,
+			M2ModuleTypeNumber:        int(controller.M2ModuleTypeNumber.Int32),
+			LedBoardQrCode:            controller.LedBoardQrCode.String,
+			DisplayType:               controller.DisplayType.String,
+			DisplayManufacturerQrCode: controller.DisplayManufacturerQrCode.String,
+			ArticleNumber:             controller.ArticleNumber.String,
+			InfoQrCode:                controller.InfoQrCode.String,
+			Can1Terminated:            controller.Can1Terminated.Bool,
+			Can2Terminated:            controller.Can2Terminated.Bool,
+			Can3Terminated:            controller.Can3Terminated.Bool,
+			Can4Terminated:            controller.Can4Terminated.Bool,
+			Usb:                       controller.Usb.Bool,
+			Serial:                    controller.Serial.Bool,
+			ManufacturerQrCodes:       controller.ManufacturerQrCode.String,
+			OrderID:                   controller.OrderID.UUID,
+			CreatedAt:                 controller.CreatedAt.Time,
+			UpdatedAt:                 controller.UpdatedAt.Time,
+			SlotPinoutJson:            controller.SlotPinoutJson.RawMessage,
+			IsDeleted:                 controller.IsDeleted.Bool,
 		})
 	}
 	return controllersJson
 }
 
-
-
-func validateCanTerminationConfParam(ct pkg.CanTermination) (database.GetTerminationConfigIdByCanTerminatedParams, error) {
+func validateCanTerminationConfParam(newController pkg.NewControllerJsonFromFrontend) (database.GetTerminationConfigIdByCanTerminatedParams, error) {
 	//TODO: add validation
 	var canParam database.GetTerminationConfigIdByCanTerminatedParams
-	canErr := canParam.Can1Terminated.Scan(ct.Can1Terminated)
-	canErr = canParam.Can2Terminated.Scan(ct.Can2Terminated)
-	canErr = canParam.Can3Terminated.Scan(ct.Can3Terminated)
-	canErr = canParam.Can4Terminated.Scan(ct.Can4Terminated)
+	canErr := canParam.Can1Terminated.Scan(newController.Can1Terminated)
+	canErr = canParam.Can2Terminated.Scan(newController.Can2Terminated)
+	canErr = canParam.Can3Terminated.Scan(newController.Can3Terminated)
+	canErr = canParam.Can4Terminated.Scan(newController.Can4Terminated)
 	return canParam, canErr
 }
 
-func validateNewMiniPcieParams(newMiniPcie pkg.MiniPcie) (database.CreateMiniPCIeModuleParams, error) {
+func validateNewMiniPcieParams(newController pkg.NewControllerJsonFromFrontend) (database.CreateMiniPCIeModuleParams, error) {
 	//TODO: add validation
 	var newMiniPcieParams database.CreateMiniPCIeModuleParams
-	newMiniPcieErr := newMiniPcieParams.MiniPcieModulesTypeID.Scan(newMiniPcie.TypeID)
-	newMiniPcieErr = newMiniPcieParams.SerialNumber.Scan(newMiniPcie.SerialNumber)
+	newMiniPcieErr := newMiniPcieParams.MiniPcieModulesTypeID.Scan(newController.MiniPcieTypeID.String())
+	newMiniPcieErr = newMiniPcieParams.SerialNumber.Scan(newController.MiniPcieSerialNumber)
 	return newMiniPcieParams, newMiniPcieErr
 }
 
-func validateNewControllerParams(newController pkg.NewControllerJson) (database.CreateControllerParams, error) {
+func validateNewControllerParams(newController pkg.NewControllerJsonFromFrontend) (database.CreateControllerParams, error) {
 	//TODO: add validation
 	var newControllerParams database.CreateControllerParams
-	newControllerErr := newControllerParams.ControllerTypesID.Scan(newController.Controller.TypesID.String())
-	newControllerErr = newControllerParams.ProjectsID.Scan(newController.Controller.ProjectsID.String())
-	newControllerErr = newControllerParams.Description.Scan(newController.Controller.Description)
-	newControllerErr = newControllerParams.ControllersPcbHwVersionsID.Scan(newController.Controller.PcbHwVersionsID.String())
-	newControllerErr = newControllerParams.SerialNumber.Scan(newController.Controller.SerialNumber)
-	newControllerErr = newControllerParams.ManufacturersID.Scan(newController.Controller.ManufacturersID.String())
-	newControllerErr = newControllerParams.MacAddress.Scan(newController.Controller.MacAddress)
-	newControllerErr = newControllerParams.SimNumber.Scan(newController.Controller.SimNumber)
-	newControllerErr = newControllerParams.MiniPcieModulesID.Scan(newController.MiniPcie.Id.String()) // pkg.MiniPcie!
-	newControllerErr = newControllerParams.M2ModulesTypesID.Scan(newController.Controller.M2ModulesTypesID.String())
-	newControllerErr = newControllerParams.DisplayAdaptersID.Scan(newController.Display.Id.String()) // Display!
-	newControllerErr = newControllerParams.ArticleNumber.Scan(newController.Controller.ArticleNumber)
-	newControllerErr = newControllerParams.InfoQrCode.Scan(newController.Controller.InfoQrCode)
-	newControllerErr = newControllerParams.CanTerminationConfsID.Scan(newController.CanTermination.Id.String()) // pkg.CanTermination!
-	newControllerErr = newControllerParams.Usb.Scan(newController.Controller.USB)
-	newControllerErr = newControllerParams.Serial.Scan(newController.Controller.Serial)
-	newControllerErr = newControllerParams.ManufacturerQrCode.Scan(newController.Controller.ManufacturerQrCode)
-	newControllerErr = newControllerParams.OrderID.UUID.Scan(newController.Controller.OrderID)
+	newControllerErr := newControllerParams.ControllerTypesID.Scan(newController.TypesID.String())	
+	newControllerErr = newControllerParams.ProjectsID.Scan(newController.ProjectsID.String())
+	newControllerErr = newControllerParams.Description.Scan(*newController.Description)
+	newControllerErr = newControllerParams.ControllersPcbHwVersionsID.Scan(newController.PcbHwVersionsID.String())
+	newControllerErr = newControllerParams.SerialNumber.Scan(newController.SerialNumber)
+	newControllerErr = newControllerParams.ManufacturersID.Scan(newController.ManufacturersID.String())
+	newControllerErr = newControllerParams.MacAddress.Scan(newController.MacAddress)
+	newControllerErr = newControllerParams.SimNumber.Scan(*newController.SimNumber)
+	newControllerErr = newControllerParams.MiniPcieModulesID.Scan(newController.MiniPcieID.String()) // pkg.MiniPcie!
+	newControllerErr = newControllerParams.M2ModulesTypesID.Scan(newController.M2ModulesTypesID.String())
+	newControllerErr = newControllerParams.DisplayAdaptersID.Scan(newController.DisplayId.String()) // Display!
+	newControllerErr = newControllerParams.ArticleNumber.Scan(*newController.ArticleNumber)
+	newControllerErr = newControllerParams.InfoQrCode.Scan(*newController.InfoQrCode)
+	newControllerErr = newControllerParams.CanTerminationConfsID.Scan(newController.CanTerminationID.String()) // pkg.CanTermination!
+	newControllerErr = newControllerParams.Usb.Scan(newController.Usb)
+	newControllerErr = newControllerParams.Serial.Scan(newController.Serial)
+	newControllerErr = newControllerParams.ManufacturerQrCode.Scan(*newController.ManufacturerQrCode)
+	newControllerErr = newControllerParams.OrderID.UUID.Scan(newController.OrderID.String())
 
 	return newControllerParams, newControllerErr
 }
 
-func validateNevLedBoardParams(qr sql.NullString, controllerId uuid.UUID) (database.CreateLedBoardParams, error) {
+func validateNevLedBoardParams(ledBoardQR sql.NullString, controllerId uuid.UUID) (database.CreateLedBoardParams, error) {
 	//TODO: add validation
 	var newLedBoardParams database.CreateLedBoardParams
 	newLedBoardErr := newLedBoardParams.ControllersID.Scan(controllerId.String())
-	newLedBoardErr = newLedBoardParams.ManufacturerQrCode.Scan(qr.String)
+	newLedBoardErr = newLedBoardParams.ManufacturerQrCode.Scan(ledBoardQR.String)
 	return newLedBoardParams, newLedBoardErr
 }
 
-func validateNewDisplayParams(newDisplay pkg.Display) (database.CreateDisplayAdapterParams, error) {
+func validateNewDisplayParams(newDisplay pkg.NewControllerJsonFromFrontend) (database.CreateDisplayAdapterParams, error) {
 	//TODO: add validation
 	var newDisplayParams database.CreateDisplayAdapterParams
-	newDisplayErr := newDisplayParams.DisplayAdaptersTypeName.Scan(newDisplay.TypeID)
-	newDisplayErr = newDisplayParams.ManufacturerQrCode.Scan(newDisplay.ManufacturerQrCode)
+	newDisplayErr := newDisplayParams.DisplayAdaptersTypeName.Scan(newDisplay.DisplayTypeName)
+	newDisplayErr = newDisplayParams.ManufacturerQrCode.Scan(newDisplay.DisplayManufacturerQrCode)
 	return newDisplayParams, newDisplayErr
 }
 
-func validateNewEncloserParams(newEncloser pkg.Encloser, controllerId uuid.UUID, controllerTypeId uuid.UUID) (database.CreateEncloserParams, error) {
+func validateNewEncloserParams(newController pkg.NewControllerJsonFromFrontend) (database.CreateEncloserParams, error) {
 	//TODO: add validation
 	var newEncloserParams database.CreateEncloserParams
-	newEncloserErr := newEncloserParams.ControllerID.Scan(controllerId.String())
-	newEncloserErr = newEncloserParams.SerialNumber.Scan(newEncloser.SerialNumber)
-	newEncloserErr = newEncloserParams.ControllerTypesID.Scan(controllerTypeId.String())
-	newEncloserErr = newEncloserParams.ManufacturersID.Scan(newEncloser.ManufacturerID.String())
+	newEncloserErr := newEncloserParams.ControllerID.Scan(newController.Id.String())
+	newEncloserErr = newEncloserParams.SerialNumber.Scan(newController.EncloserSerialNumber)
+	newEncloserErr = newEncloserParams.ControllerTypesID.Scan(newController.TypesID.String())
+	newEncloserErr = newEncloserParams.ManufacturersID.Scan(newController.EncloserManufacturerID.String())
 	return newEncloserParams, newEncloserErr
-}
-
-func controllerByID(cnf *ApiCfg, c *fiber.Ctx, uuid uuid.UUID) (pkg.DBControllerToJsonResponse, bool, error) {
-	controllerById, err := cnf.DbQ.GetControllerById(c.Context(), uuid)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			c.Response().SetStatusCode(404)
-			return pkg.DBControllerToJsonResponse{}, true, c.SendString("controller not found")
-		}
-		c.Response().SetStatusCode(500)
-		log.Println("Error getting controller by id from database: ", err)
-		return pkg.DBControllerToJsonResponse{}, true, err
-	}
-
-	controllerJson := mapOneControllerToJson(controllerById)
-	return controllerJson, false, nil
 }

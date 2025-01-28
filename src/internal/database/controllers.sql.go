@@ -14,25 +14,24 @@ import (
 )
 
 const createController = `-- name: CreateController :one
-INSERT INTO CONTROLLERS
-(CONTROLLER_TYPES_ID,
- PROJECTS_ID,
- DESCRIPTION,
- controllers_pcb_hw_versions_id,
- SERIAL_NUMBER,
- MANUFACTURERS_ID,
- MAC_ADDRESS,
- SIM_NUMBER,
- MINI_PCIE_MODULES_ID,
- m2_modules_types_id,
- display_adapters_id,
- ARTICLE_NUMBER,
- info_QR_CODE,
- CAN_TERMINATION_CONFS_ID,
- USB,
- serial,
- manufacturer_qr_code,
- ORDER_ID)
+INSERT INTO CONTROLLERS (CONTROLLER_TYPES_ID,
+                         PROJECTS_ID,
+                         DESCRIPTION,
+                         controllers_pcb_hw_versions_id,
+                         SERIAL_NUMBER,
+                         MANUFACTURERS_ID,
+                         MAC_ADDRESS,
+                         SIM_NUMBER,
+                         MINI_PCIE_MODULES_ID,
+                         m2_modules_types_id,
+                         display_adapters_id,
+                         ARTICLE_NUMBER,
+                         info_QR_CODE,
+                         CAN_TERMINATION_CONFS_ID,
+                         USB,
+                         serial,
+                         manufacturer_qr_code,
+                         ORDER_ID)
 VALUES ($1,
         $2,
         $3,
@@ -51,7 +50,8 @@ VALUES ($1,
         $16,
         $17,
         $18)
-returning id, controller_types_id, projects_id, description, controllers_pcb_hw_versions_id, pcb_version_number, serial_number, manufacturers_id, assembly_date, mac_address, sim_number, mini_pcie_modules_id, m2_modules_types_id, display_adapters_id, article_number, info_qr_code, can_termination_confs_id, usb, serial, manufacturer_qr_code, order_id, created_at, updated_at, is_deleted
+returning
+    id, controller_types_id, projects_id, description, controllers_pcb_hw_versions_id, pcb_version_number, serial_number, manufacturers_id, assembly_date, mac_address, sim_number, mini_pcie_modules_id, m2_modules_types_id, display_adapters_id, article_number, info_qr_code, can_termination_confs_id, usb, serial, manufacturer_qr_code, order_id, created_at, updated_at, is_deleted
 `
 
 type CreateControllerParams struct {
@@ -126,14 +126,43 @@ func (q *Queries) CreateController(ctx context.Context, arg CreateControllerPara
 	return i, err
 }
 
+const createJoinControllerSlotToIoModule = `-- name: CreateJoinControllerSlotToIoModule :one
+INSERT INTO controller_slot (controllers_id, io_modules_id, slot_number)
+VALUES ($1, $2, $3)
+returning
+    id, controllers_id, io_modules_id, slot_number, is_deleted
+`
+
+type CreateJoinControllerSlotToIoModuleParams struct {
+	ControllersID uuid.NullUUID `json:"controllers_id"`
+	IoModulesID   uuid.NullUUID `json:"io_modules_id"`
+	SlotNumber    sql.NullInt32 `json:"slot_number"`
+}
+
+func (q *Queries) CreateJoinControllerSlotToIoModule(ctx context.Context, arg CreateJoinControllerSlotToIoModuleParams) (ControllerSlot, error) {
+	row := q.db.QueryRowContext(ctx, createJoinControllerSlotToIoModule, arg.ControllersID, arg.IoModulesID, arg.SlotNumber)
+	var i ControllerSlot
+	err := row.Scan(
+		&i.ID,
+		&i.ControllersID,
+		&i.IoModulesID,
+		&i.SlotNumber,
+		&i.IsDeleted,
+	)
+	return i, err
+}
+
 const getALLControllerTypes = `-- name: GetALLControllerTypes :many
-SELECT id, controller_types.name
+SELECT id,
+       controller_types.name,
+       controller_types.io_module_slot_amount
 FROM controller_types
 `
 
 type GetALLControllerTypesRow struct {
-	ID   uuid.UUID      `json:"id"`
-	Name sql.NullString `json:"name"`
+	ID                 uuid.UUID      `json:"id"`
+	Name               sql.NullString `json:"name"`
+	IoModuleSlotAmount sql.NullInt32  `json:"io_module_slot_amount"`
 }
 
 func (q *Queries) GetALLControllerTypes(ctx context.Context) ([]GetALLControllerTypesRow, error) {
@@ -145,7 +174,7 @@ func (q *Queries) GetALLControllerTypes(ctx context.Context) ([]GetALLController
 	var items []GetALLControllerTypesRow
 	for rows.Next() {
 		var i GetALLControllerTypesRow
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		if err := rows.Scan(&i.ID, &i.Name, &i.IoModuleSlotAmount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -161,39 +190,36 @@ func (q *Queries) GetALLControllerTypes(ctx context.Context) ([]GetALLController
 
 const getAllControllers = `-- name: GetAllControllers :many
 SELECT c.id,
-       ct.name                       AS controller_type_name,
-       ct.io_module_slot_amount      AS io_module_socket_amount,
-       p.name                        AS project_name,
+       ct.name                                      AS type_name,
+       ct.io_module_slot_amount                     AS io_module_socket_amount,
+       p.name                                       AS project_name,
        c.description,
-       concat(
-               pcbv.version_number,
-               pcbrev.revision
-       )                             AS pcb_hw_version,
+       concat(pcbv.version_number, pcbrev.revision) AS pcb_hw_version,
        c.pcb_version_number,
-       c.serial_number               as controller_serial_number,
-       m.name                        AS manufacturer_name,
+       c.serial_number                              as serial_number,
+       m.name                                       AS manufacturer_name,
        c.assembly_date,
        c.mac_address,
        c.sim_number,
-       enc.serial_number             as enclosure_serial_number,
-       encman.name                   as enclosure_manufacturer,
-       mpt.name                      AS mini_pcie_modules_name,
-       mpt.module_type_number        as mini_pcie_module_type_number,
-       mpcie.serial_number           AS mini_pcie_serial_number,
-       m2t.name                      AS m2_module_name,
-       m2t.module_type_number        AS m2_module_type_number,
-       ldb.manufacturer_qr_code      as LED_board,
-       da.display_adapters_type_name as display_type,
-       da.manufacturer_qr_code       as display_manufacturer_qr_code,
+       enc.serial_number                            as enclosure_serial_number,
+       encman.name                                  as enclosure_manufacturer,
+       mpt.name                                     AS mini_pcie_modules_name,
+       mpt.module_type_number                       as mini_pcie_module_type_number,
+       mpcie.serial_number                          AS mini_pcie_serial_number,
+       m2t.name                                     AS m2_module_name,
+       m2t.module_type_number                       AS m2_module_type_number,
+       ldb.manufacturer_qr_code                     as led_board_qr_code,
+       da.display_adapters_type_name                as display_type,
+       da.manufacturer_qr_code                      as display_manufacturer_qr_code,
        c.article_number,
-       c.info_qr_code                     as controller_info_qr_code,
+       c.info_qr_code                               as info_qr_code,
        ctc.can_1_terminated,
        ctc.can_2_terminated,
        ctc.can_3_terminated,
        ctc.can_4_terminated,
        c.usb,
        c.serial,
-       c.manufacturer_qr_code        as controller_manufacturer_qr_code,
+       c.manufacturer_qr_code                       as manufacturer_qr_code,
        c.order_id,
        c.created_at,
        c.updated_at,
@@ -216,42 +242,42 @@ FROM controllers c
 `
 
 type GetAllControllersRow struct {
-	ID                           uuid.UUID             `json:"id"`
-	ControllerTypeName           sql.NullString        `json:"controller_type_name"`
-	IoModuleSocketAmount         sql.NullInt32         `json:"io_module_socket_amount"`
-	ProjectName                  sql.NullString        `json:"project_name"`
-	Description                  sql.NullString        `json:"description"`
-	PcbHwVersion                 interface{}           `json:"pcb_hw_version"`
-	PcbVersionNumber             sql.NullInt32         `json:"pcb_version_number"`
-	ControllerSerialNumber       sql.NullString        `json:"controller_serial_number"`
-	ManufacturerName             sql.NullString        `json:"manufacturer_name"`
-	AssemblyDate                 sql.NullTime          `json:"assembly_date"`
-	MacAddress                   sql.NullString        `json:"mac_address"`
-	SimNumber                    sql.NullString        `json:"sim_number"`
-	EnclosureSerialNumber        sql.NullString        `json:"enclosure_serial_number"`
-	EnclosureManufacturer        sql.NullString        `json:"enclosure_manufacturer"`
-	MiniPcieModulesName          sql.NullString        `json:"mini_pcie_modules_name"`
-	MiniPcieModuleTypeNumber     sql.NullInt32         `json:"mini_pcie_module_type_number"`
-	MiniPcieSerialNumber         sql.NullString        `json:"mini_pcie_serial_number"`
-	M2ModuleName                 sql.NullString        `json:"m2_module_name"`
-	M2ModuleTypeNumber           sql.NullInt32         `json:"m2_module_type_number"`
-	LedBoard                     sql.NullString        `json:"led_board"`
-	DisplayType                  sql.NullString        `json:"display_type"`
-	DisplayManufacturerQrCode    sql.NullString        `json:"display_manufacturer_qr_code"`
-	ArticleNumber                sql.NullString        `json:"article_number"`
-	ControllerInfoQrCode         sql.NullString        `json:"controller_info_qr_code"`
-	Can1Terminated               sql.NullBool          `json:"can_1_terminated"`
-	Can2Terminated               sql.NullBool          `json:"can_2_terminated"`
-	Can3Terminated               sql.NullBool          `json:"can_3_terminated"`
-	Can4Terminated               sql.NullBool          `json:"can_4_terminated"`
-	Usb                          sql.NullBool          `json:"usb"`
-	Serial                       sql.NullBool          `json:"serial"`
-	ControllerManufacturerQrCode sql.NullString        `json:"controller_manufacturer_qr_code"`
-	OrderID                      uuid.NullUUID         `json:"order_id"`
-	CreatedAt                    sql.NullTime          `json:"created_at"`
-	UpdatedAt                    sql.NullTime          `json:"updated_at"`
-	IsDeleted                    sql.NullBool          `json:"is_deleted"`
-	SlotPinoutJson               pqtype.NullRawMessage `json:"slot_pinout_json"`
+	ID                        uuid.UUID             `json:"id"`
+	TypeName                  sql.NullString        `json:"type_name"`
+	IoModuleSocketAmount      sql.NullInt32         `json:"io_module_socket_amount"`
+	ProjectName               sql.NullString        `json:"project_name"`
+	Description               sql.NullString        `json:"description"`
+	PcbHwVersion              interface{}           `json:"pcb_hw_version"`
+	PcbVersionNumber          sql.NullInt32         `json:"pcb_version_number"`
+	SerialNumber              sql.NullString        `json:"serial_number"`
+	ManufacturerName          sql.NullString        `json:"manufacturer_name"`
+	AssemblyDate              sql.NullTime          `json:"assembly_date"`
+	MacAddress                sql.NullString        `json:"mac_address"`
+	SimNumber                 sql.NullString        `json:"sim_number"`
+	EnclosureSerialNumber     sql.NullString        `json:"enclosure_serial_number"`
+	EnclosureManufacturer     sql.NullString        `json:"enclosure_manufacturer"`
+	MiniPcieModulesName       sql.NullString        `json:"mini_pcie_modules_name"`
+	MiniPcieModuleTypeNumber  sql.NullInt32         `json:"mini_pcie_module_type_number"`
+	MiniPcieSerialNumber      sql.NullString        `json:"mini_pcie_serial_number"`
+	M2ModuleName              sql.NullString        `json:"m2_module_name"`
+	M2ModuleTypeNumber        sql.NullInt32         `json:"m2_module_type_number"`
+	LedBoardQrCode            sql.NullString        `json:"led_board_qr_code"`
+	DisplayType               sql.NullString        `json:"display_type"`
+	DisplayManufacturerQrCode sql.NullString        `json:"display_manufacturer_qr_code"`
+	ArticleNumber             sql.NullString        `json:"article_number"`
+	InfoQrCode                sql.NullString        `json:"info_qr_code"`
+	Can1Terminated            sql.NullBool          `json:"can_1_terminated"`
+	Can2Terminated            sql.NullBool          `json:"can_2_terminated"`
+	Can3Terminated            sql.NullBool          `json:"can_3_terminated"`
+	Can4Terminated            sql.NullBool          `json:"can_4_terminated"`
+	Usb                       sql.NullBool          `json:"usb"`
+	Serial                    sql.NullBool          `json:"serial"`
+	ManufacturerQrCode        sql.NullString        `json:"manufacturer_qr_code"`
+	OrderID                   uuid.NullUUID         `json:"order_id"`
+	CreatedAt                 sql.NullTime          `json:"created_at"`
+	UpdatedAt                 sql.NullTime          `json:"updated_at"`
+	IsDeleted                 sql.NullBool          `json:"is_deleted"`
+	SlotPinoutJson            pqtype.NullRawMessage `json:"slot_pinout_json"`
 }
 
 func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow, error) {
@@ -265,13 +291,13 @@ func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow
 		var i GetAllControllersRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.ControllerTypeName,
+			&i.TypeName,
 			&i.IoModuleSocketAmount,
 			&i.ProjectName,
 			&i.Description,
 			&i.PcbHwVersion,
 			&i.PcbVersionNumber,
-			&i.ControllerSerialNumber,
+			&i.SerialNumber,
 			&i.ManufacturerName,
 			&i.AssemblyDate,
 			&i.MacAddress,
@@ -283,18 +309,18 @@ func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow
 			&i.MiniPcieSerialNumber,
 			&i.M2ModuleName,
 			&i.M2ModuleTypeNumber,
-			&i.LedBoard,
+			&i.LedBoardQrCode,
 			&i.DisplayType,
 			&i.DisplayManufacturerQrCode,
 			&i.ArticleNumber,
-			&i.ControllerInfoQrCode,
+			&i.InfoQrCode,
 			&i.Can1Terminated,
 			&i.Can2Terminated,
 			&i.Can3Terminated,
 			&i.Can4Terminated,
 			&i.Usb,
 			&i.Serial,
-			&i.ControllerManufacturerQrCode,
+			&i.ManufacturerQrCode,
 			&i.OrderID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -315,7 +341,9 @@ func (q *Queries) GetAllControllers(ctx context.Context) ([]GetAllControllersRow
 }
 
 const getAllControllersPcbHwVersions = `-- name: GetAllControllersPcbHwVersions :many
-select id, version_number, revision
+select id,
+       version_number,
+       revision
 from controller_pcb_hw_versions
 `
 
@@ -350,39 +378,36 @@ func (q *Queries) GetAllControllersPcbHwVersions(ctx context.Context) ([]GetAllC
 
 const getControllerById = `-- name: GetControllerById :one
 SELECT c.id,
-       ct.name                       AS controller_type_name,
-       ct.io_module_slot_amount      AS io_module_socket_amount,
-       p.name                        AS project_name,
+       ct.name                                      AS type_name,
+       ct.io_module_slot_amount                     AS io_module_socket_amount,
+       p.name                                       AS project_name,
        c.description,
-       concat(
-               pcbv.version_number,
-               pcbrev.revision
-       )                             AS pcb_hw_version,
+       concat(pcbv.version_number, pcbrev.revision) AS pcb_hw_version,
        c.pcb_version_number,
-       c.serial_number               as controller_serial_number,
-       m.name                        AS manufacturer_name,
+       c.serial_number                              as serial_number,
+       m.name                                       AS manufacturer_name,
        c.assembly_date,
        c.mac_address,
        c.sim_number,
-       enc.serial_number             as enclosure_serial_number,
-       encman.name                   as enclosure_manufacturer,
-       mpt.name                      AS mini_pcie_modules_name,
-       mpt.module_type_number        as mini_pcie_module_type_number,
-       mpcie.serial_number           AS mini_pcie_serial_number,
-       m2t.name                      AS m2_module_name,
-       m2t.module_type_number        AS m2_module_type_number,
-       ldb.manufacturer_qr_code      as LED_board,
-       da.display_adapters_type_name as display_type,
-       da.manufacturer_qr_code       as display_manufacturer_qr_code,
+       enc.serial_number                            as enclosure_serial_number,
+       encman.name                                  as enclosure_manufacturer,
+       mpt.name                                     AS mini_pcie_modules_name,
+       mpt.module_type_number                       as mini_pcie_module_type_number,
+       mpcie.serial_number                          AS mini_pcie_serial_number,
+       m2t.name                                     AS m2_module_name,
+       m2t.module_type_number                       AS m2_module_type_number,
+       ldb.manufacturer_qr_code                     as led_board_qr_code,
+       da.display_adapters_type_name                as display_type,
+       da.manufacturer_qr_code                      as display_manufacturer_qr_code,
        c.article_number,
-       c.info_qr_code                     as controller_info_qr_code,
+       c.info_qr_code                               as info_qr_code,
        ctc.can_1_terminated,
        ctc.can_2_terminated,
        ctc.can_3_terminated,
        ctc.can_4_terminated,
        c.usb,
        c.serial,
-       c.manufacturer_qr_code        as controller_manufacturer_qr_code,
+       c.manufacturer_qr_code                       as manufacturer_qr_code,
        c.order_id,
        c.created_at,
        c.updated_at,
@@ -406,42 +431,42 @@ WHERE c.id = $1
 `
 
 type GetControllerByIdRow struct {
-	ID                           uuid.UUID             `json:"id"`
-	ControllerTypeName           sql.NullString        `json:"controller_type_name"`
-	IoModuleSocketAmount         sql.NullInt32         `json:"io_module_socket_amount"`
-	ProjectName                  sql.NullString        `json:"project_name"`
-	Description                  sql.NullString        `json:"description"`
-	PcbHwVersion                 interface{}           `json:"pcb_hw_version"`
-	PcbVersionNumber             sql.NullInt32         `json:"pcb_version_number"`
-	ControllerSerialNumber       sql.NullString        `json:"controller_serial_number"`
-	ManufacturerName             sql.NullString        `json:"manufacturer_name"`
-	AssemblyDate                 sql.NullTime          `json:"assembly_date"`
-	MacAddress                   sql.NullString        `json:"mac_address"`
-	SimNumber                    sql.NullString        `json:"sim_number"`
-	EnclosureSerialNumber        sql.NullString        `json:"enclosure_serial_number"`
-	EnclosureManufacturer        sql.NullString        `json:"enclosure_manufacturer"`
-	MiniPcieModulesName          sql.NullString        `json:"mini_pcie_modules_name"`
-	MiniPcieModuleTypeNumber     sql.NullInt32         `json:"mini_pcie_module_type_number"`
-	MiniPcieSerialNumber         sql.NullString        `json:"mini_pcie_serial_number"`
-	M2ModuleName                 sql.NullString        `json:"m2_module_name"`
-	M2ModuleTypeNumber           sql.NullInt32         `json:"m2_module_type_number"`
-	LedBoard                     sql.NullString        `json:"led_board"`
-	DisplayType                  sql.NullString        `json:"display_type"`
-	DisplayManufacturerQrCode    sql.NullString        `json:"display_manufacturer_qr_code"`
-	ArticleNumber                sql.NullString        `json:"article_number"`
-	ControllerInfoQrCode         sql.NullString        `json:"controller_info_qr_code"`
-	Can1Terminated               sql.NullBool          `json:"can_1_terminated"`
-	Can2Terminated               sql.NullBool          `json:"can_2_terminated"`
-	Can3Terminated               sql.NullBool          `json:"can_3_terminated"`
-	Can4Terminated               sql.NullBool          `json:"can_4_terminated"`
-	Usb                          sql.NullBool          `json:"usb"`
-	Serial                       sql.NullBool          `json:"serial"`
-	ControllerManufacturerQrCode sql.NullString        `json:"controller_manufacturer_qr_code"`
-	OrderID                      uuid.NullUUID         `json:"order_id"`
-	CreatedAt                    sql.NullTime          `json:"created_at"`
-	UpdatedAt                    sql.NullTime          `json:"updated_at"`
-	IsDeleted                    sql.NullBool          `json:"is_deleted"`
-	SlotPinoutJson               pqtype.NullRawMessage `json:"slot_pinout_json"`
+	ID                        uuid.UUID             `json:"id"`
+	TypeName                  sql.NullString        `json:"type_name"`
+	IoModuleSocketAmount      sql.NullInt32         `json:"io_module_socket_amount"`
+	ProjectName               sql.NullString        `json:"project_name"`
+	Description               sql.NullString        `json:"description"`
+	PcbHwVersion              interface{}           `json:"pcb_hw_version"`
+	PcbVersionNumber          sql.NullInt32         `json:"pcb_version_number"`
+	SerialNumber              sql.NullString        `json:"serial_number"`
+	ManufacturerName          sql.NullString        `json:"manufacturer_name"`
+	AssemblyDate              sql.NullTime          `json:"assembly_date"`
+	MacAddress                sql.NullString        `json:"mac_address"`
+	SimNumber                 sql.NullString        `json:"sim_number"`
+	EnclosureSerialNumber     sql.NullString        `json:"enclosure_serial_number"`
+	EnclosureManufacturer     sql.NullString        `json:"enclosure_manufacturer"`
+	MiniPcieModulesName       sql.NullString        `json:"mini_pcie_modules_name"`
+	MiniPcieModuleTypeNumber  sql.NullInt32         `json:"mini_pcie_module_type_number"`
+	MiniPcieSerialNumber      sql.NullString        `json:"mini_pcie_serial_number"`
+	M2ModuleName              sql.NullString        `json:"m2_module_name"`
+	M2ModuleTypeNumber        sql.NullInt32         `json:"m2_module_type_number"`
+	LedBoardQrCode            sql.NullString        `json:"led_board_qr_code"`
+	DisplayType               sql.NullString        `json:"display_type"`
+	DisplayManufacturerQrCode sql.NullString        `json:"display_manufacturer_qr_code"`
+	ArticleNumber             sql.NullString        `json:"article_number"`
+	InfoQrCode                sql.NullString        `json:"info_qr_code"`
+	Can1Terminated            sql.NullBool          `json:"can_1_terminated"`
+	Can2Terminated            sql.NullBool          `json:"can_2_terminated"`
+	Can3Terminated            sql.NullBool          `json:"can_3_terminated"`
+	Can4Terminated            sql.NullBool          `json:"can_4_terminated"`
+	Usb                       sql.NullBool          `json:"usb"`
+	Serial                    sql.NullBool          `json:"serial"`
+	ManufacturerQrCode        sql.NullString        `json:"manufacturer_qr_code"`
+	OrderID                   uuid.NullUUID         `json:"order_id"`
+	CreatedAt                 sql.NullTime          `json:"created_at"`
+	UpdatedAt                 sql.NullTime          `json:"updated_at"`
+	IsDeleted                 sql.NullBool          `json:"is_deleted"`
+	SlotPinoutJson            pqtype.NullRawMessage `json:"slot_pinout_json"`
 }
 
 func (q *Queries) GetControllerById(ctx context.Context, id uuid.UUID) (GetControllerByIdRow, error) {
@@ -449,13 +474,13 @@ func (q *Queries) GetControllerById(ctx context.Context, id uuid.UUID) (GetContr
 	var i GetControllerByIdRow
 	err := row.Scan(
 		&i.ID,
-		&i.ControllerTypeName,
+		&i.TypeName,
 		&i.IoModuleSocketAmount,
 		&i.ProjectName,
 		&i.Description,
 		&i.PcbHwVersion,
 		&i.PcbVersionNumber,
-		&i.ControllerSerialNumber,
+		&i.SerialNumber,
 		&i.ManufacturerName,
 		&i.AssemblyDate,
 		&i.MacAddress,
@@ -467,18 +492,18 @@ func (q *Queries) GetControllerById(ctx context.Context, id uuid.UUID) (GetContr
 		&i.MiniPcieSerialNumber,
 		&i.M2ModuleName,
 		&i.M2ModuleTypeNumber,
-		&i.LedBoard,
+		&i.LedBoardQrCode,
 		&i.DisplayType,
 		&i.DisplayManufacturerQrCode,
 		&i.ArticleNumber,
-		&i.ControllerInfoQrCode,
+		&i.InfoQrCode,
 		&i.Can1Terminated,
 		&i.Can2Terminated,
 		&i.Can3Terminated,
 		&i.Can4Terminated,
 		&i.Usb,
 		&i.Serial,
-		&i.ControllerManufacturerQrCode,
+		&i.ManufacturerQrCode,
 		&i.OrderID,
 		&i.CreatedAt,
 		&i.UpdatedAt,

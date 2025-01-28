@@ -13,6 +13,134 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const createIoModule = `-- name: CreateIoModule :one
+INSERT INTO io_modules (io_module_types_id,
+                        manufacturer_top_qr_code,
+                        manufacturer_bottom_qr_code,
+                        rma_number,
+                        io_module_hw_versions_id,
+                        order_id)
+VALUES ($1, $2, $3, $4, $5, $6)
+returning
+    id, io_module_types_id, manufacturer_top_qr_code, manufacturer_bottom_qr_code, rma_number, io_module_hw_versions_id, order_id, created_at, updated_at, is_deleted
+`
+
+type CreateIoModuleParams struct {
+	IoModuleTypesID          uuid.NullUUID  `json:"io_module_types_id"`
+	ManufacturerTopQrCode    sql.NullString `json:"manufacturer_top_qr_code"`
+	ManufacturerBottomQrCode sql.NullString `json:"manufacturer_bottom_qr_code"`
+	RmaNumber                sql.NullString `json:"rma_number"`
+	IoModuleHwVersionsID     uuid.NullUUID  `json:"io_module_hw_versions_id"`
+	OrderID                  uuid.NullUUID  `json:"order_id"`
+}
+
+func (q *Queries) CreateIoModule(ctx context.Context, arg CreateIoModuleParams) (IoModule, error) {
+	row := q.db.QueryRowContext(ctx, createIoModule,
+		arg.IoModuleTypesID,
+		arg.ManufacturerTopQrCode,
+		arg.ManufacturerBottomQrCode,
+		arg.RmaNumber,
+		arg.IoModuleHwVersionsID,
+		arg.OrderID,
+	)
+	var i IoModule
+	err := row.Scan(
+		&i.ID,
+		&i.IoModuleTypesID,
+		&i.ManufacturerTopQrCode,
+		&i.ManufacturerBottomQrCode,
+		&i.RmaNumber,
+		&i.IoModuleHwVersionsID,
+		&i.OrderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsDeleted,
+	)
+	return i, err
+}
+
+const createIoModuleHWVersion = `-- name: CreateIoModuleHWVersion :one
+INSERT INTO io_module_hw_versions (hw_version)
+VALUES ($1)
+returning
+    id, hw_version, created_at, updated_at, is_deleted
+`
+
+func (q *Queries) CreateIoModuleHWVersion(ctx context.Context, hwVersion sql.NullInt32) (IoModuleHwVersion, error) {
+	row := q.db.QueryRowContext(ctx, createIoModuleHWVersion, hwVersion)
+	var i IoModuleHwVersion
+	err := row.Scan(
+		&i.ID,
+		&i.HwVersion,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsDeleted,
+	)
+	return i, err
+}
+
+const createIoModuleType = `-- name: CreateIoModuleType :one
+INSERT INTO io_module_types (module_type_name, module_type_number, pinout_json)
+VALUES ($1, $2, $3)
+returning
+    id, module_type_name, module_type_number, pinout_json, created_at, updated_at, is_deleted
+`
+
+type CreateIoModuleTypeParams struct {
+	ModuleTypeName   sql.NullString        `json:"module_type_name"`
+	ModuleTypeNumber sql.NullInt32         `json:"module_type_number"`
+	PinoutJson       pqtype.NullRawMessage `json:"pinout_json"`
+}
+
+func (q *Queries) CreateIoModuleType(ctx context.Context, arg CreateIoModuleTypeParams) (IoModuleType, error) {
+	row := q.db.QueryRowContext(ctx, createIoModuleType, arg.ModuleTypeName, arg.ModuleTypeNumber, arg.PinoutJson)
+	var i IoModuleType
+	err := row.Scan(
+		&i.ID,
+		&i.ModuleTypeName,
+		&i.ModuleTypeNumber,
+		&i.PinoutJson,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsDeleted,
+	)
+	return i, err
+}
+
+const getAllIoModuleTypes = `-- name: GetAllIoModuleTypes :many
+select id, module_type_name, module_type_number
+from io_module_types
+`
+
+type GetAllIoModuleTypesRow struct {
+	ID               uuid.UUID      `json:"id"`
+	ModuleTypeName   sql.NullString `json:"module_type_name"`
+	ModuleTypeNumber sql.NullInt32  `json:"module_type_number"`
+}
+
+func (q *Queries) GetAllIoModuleTypes(ctx context.Context) ([]GetAllIoModuleTypesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllIoModuleTypes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllIoModuleTypesRow
+	for rows.Next() {
+		var i GetAllIoModuleTypesRow
+		if err := rows.Scan(&i.ID, &i.ModuleTypeName, &i.ModuleTypeNumber); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllIoModules = `-- name: GetAllIoModules :many
 SELECT io.id,
        iomt.module_type_name,
