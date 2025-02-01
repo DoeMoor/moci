@@ -92,7 +92,10 @@ func main() {
 	app.Get("/api/controllers/:id", apiConf.GetControllerById)
 
 	app.Get("/api/iomodules", apiConf.GetAllIoModules)
+	app.Get("/api/iomodules/types", apiConf.GetAllIoModuleTypes)
+	app.Post("/api/iomodules/types", apiConf.CreateIoModuleType)
 	app.Get("/api/iomodules/:id", apiConf.GetIoModuleById)
+	app.Post("/api/iomodules", apiConf.CreateIoModule)
 
 	app.Get("/api/manufacturers", apiConf.GetAllManufacturers)
 	app.Get("/api/manufacturers/:id", apiConf.GetManufacturerById)

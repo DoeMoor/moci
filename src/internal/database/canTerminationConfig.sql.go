@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -20,10 +19,10 @@ returning id, can_1_terminated, can_3_terminated, can_2_terminated, can_4_termin
 `
 
 type CreateCanTerminationConfigParams struct {
-	Can1Terminated sql.NullBool `json:"can_1_terminated"`
-	Can2Terminated sql.NullBool `json:"can_2_terminated"`
-	Can3Terminated sql.NullBool `json:"can_3_terminated"`
-	Can4Terminated sql.NullBool `json:"can_4_terminated"`
+	Can1Terminated bool `json:"can_1_terminated"`
+	Can2Terminated bool `json:"can_2_terminated"`
+	Can3Terminated bool `json:"can_3_terminated"`
+	Can4Terminated bool `json:"can_4_terminated"`
 }
 
 func (q *Queries) CreateCanTerminationConfig(ctx context.Context, arg CreateCanTerminationConfigParams) (CanTerminationConf, error) {
@@ -53,11 +52,11 @@ from can_termination_confs
 `
 
 type GetAllCanTerminationConfigRow struct {
-	ID             uuid.UUID    `json:"id"`
-	Can1Terminated sql.NullBool `json:"can_1_terminated"`
-	Can2Terminated sql.NullBool `json:"can_2_terminated"`
-	Can3Terminated sql.NullBool `json:"can_3_terminated"`
-	Can4Terminated sql.NullBool `json:"can_4_terminated"`
+	ID             uuid.UUID `json:"id"`
+	Can1Terminated bool      `json:"can_1_terminated"`
+	Can2Terminated bool      `json:"can_2_terminated"`
+	Can3Terminated bool      `json:"can_3_terminated"`
+	Can4Terminated bool      `json:"can_4_terminated"`
 }
 
 func (q *Queries) GetAllCanTerminationConfig(ctx context.Context) ([]GetAllCanTerminationConfigRow, error) {
@@ -99,10 +98,10 @@ where can_1_terminated = $1
 `
 
 type GetTerminationConfigIdByCanTerminatedParams struct {
-	Can1Terminated sql.NullBool `json:"can_1_terminated"`
-	Can2Terminated sql.NullBool `json:"can_2_terminated"`
-	Can3Terminated sql.NullBool `json:"can_3_terminated"`
-	Can4Terminated sql.NullBool `json:"can_4_terminated"`
+	Can1Terminated bool `json:"can_1_terminated"`
+	Can2Terminated bool `json:"can_2_terminated"`
+	Can3Terminated bool `json:"can_3_terminated"`
+	Can4Terminated bool `json:"can_4_terminated"`
 }
 
 func (q *Queries) GetTerminationConfigIdByCanTerminated(ctx context.Context, arg GetTerminationConfigIdByCanTerminatedParams) (uuid.UUID, error) {

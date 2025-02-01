@@ -83,7 +83,7 @@ FROM controller_types;
 select *
 from controllers;
 
-select display_adapters_type_name as type_name, manufacturer_qr_code as qr_code
+select id, display_adapters_type_name as type_name, manufacturer_qr_code as qr_code
 from display_adapters;
 
 SELECT c.id,
@@ -103,6 +103,7 @@ SELECT c.id,
        c.sim_number,
        enc.serial_number             as enclosure_serial_number,
        encman.name                   as enclosure_manufacturer_name,
+       mpt.id,
        mpt.name                      AS mini_pcie_modules_name,
        mpt.module_type_number        as mini_pcie_module_type_number,
        mpcie.serial_number           AS mini_pcie_serial_number,

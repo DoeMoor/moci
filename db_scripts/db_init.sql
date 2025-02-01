@@ -56,10 +56,10 @@ CREATE TABLE "led_daughter_board" (
 
 CREATE TABLE "can_termination_confs" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "can_1_terminated" bool not null ,
-  "can_3_terminated" bool not null ,
-  "can_2_terminated" bool not null ,
-  "can_4_terminated" bool not null ,
+  "can_1_terminated" bool NOT NULL,
+  "can_3_terminated" bool NOT NULL,
+  "can_2_terminated" bool NOT NULL,
+  "can_4_terminated" bool NOT NULL,
   "created_at" timestamp DEFAULT (now()),
   "updated_at" timestamp,
   "is_deleted" bool DEFAULT false
@@ -111,11 +111,11 @@ CREATE TABLE "controller_conf_io_module_type_junction" (
 
 CREATE TABLE "io_modules" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "io_module_types_id" uuid,
-  "manufacturer_top_qr_code" varchar(50) UNIQUE,
-  "manufacturer_bottom_qr_code" varchar(50) UNIQUE,
+  "io_module_types_id" uuid NOT NULL,
+  "manufacturer_top_qr_code" varchar(50) UNIQUE NOT NULL,
+  "manufacturer_bottom_qr_code" varchar(50) UNIQUE NOT NULL,
   "rma_number" varchar(50),
-  "io_module_hw_versions_id" uuid,
+  "io_module_hw_versions_id" uuid NOT NULL,
   "order_id" uuid,
   "created_at" timestamp DEFAULT (now()),
   "updated_at" timestamp,
@@ -124,7 +124,7 @@ CREATE TABLE "io_modules" (
 
 CREATE TABLE "io_module_hw_versions" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "hw_version" int UNIQUE,
+  "hw_version" varchar(5) UNIQUE NOT NULL,
   "created_at" timestamp DEFAULT (now()),
   "updated_at" timestamp,
   "is_deleted" bool DEFAULT false
@@ -132,7 +132,7 @@ CREATE TABLE "io_module_hw_versions" (
 
 CREATE TABLE "io_module_types" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "module_type_name" varchar(30),
+  "module_type_name" varchar(30) NOT NULL,
   "module_type_number" int,
   "pinout_json" jsonb,
   "created_at" timestamp DEFAULT (now()),
@@ -175,7 +175,7 @@ CREATE TABLE "customer_projects_junction" (
 
 CREATE TABLE "orders" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "customers_id" uuid,
+  "customers_id" uuid NOT NULL,
   "notes" text,
   "delivery_date" timestamp,
   "invoice_number" varchar(50),
@@ -212,7 +212,7 @@ CREATE TABLE "m2_modules_types" (
 CREATE TABLE "display_adapters" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
   "display_adapters_type_name" varchar(20),
-  "manufacturer_qr_code" varchar(50) UNIQUE,
+  "manufacturer_qr_code" varchar(50),
   "created_at" timestamp DEFAULT (now()),
   "updated_at" timestamp,
   "is_deleted" bool DEFAULT false
@@ -236,7 +236,7 @@ CREATE TABLE "mini_pcie_modules_type" (
 
 CREATE TABLE "mini_pcie_modules" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "mini_pcie_modules_type_id" uuid,
+  "mini_pcie_modules_type_id" uuid NOT NULL,
   "serial_number" varchar(20) UNIQUE,
   "created_at" timestamp DEFAULT (now()),
   "updated_at" timestamp,
@@ -260,6 +260,8 @@ CREATE UNIQUE INDEX ON "controller_pcb_hw_versions" ("version_number", "revision
 CREATE UNIQUE INDEX ON "io_module_types" ("module_type_name", "module_type_number");
 
 CREATE UNIQUE INDEX ON "m2_modules_types" ("name", "module_type_number");
+
+CREATE UNIQUE INDEX ON "display_adapters" ("display_adapters_type_name", "manufacturer_qr_code");
 
 CREATE UNIQUE INDEX ON "mini_pcie_modules_type" ("name", "module_type_number");
 

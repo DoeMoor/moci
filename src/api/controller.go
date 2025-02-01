@@ -21,7 +21,7 @@ func (cnf *ApiCfg) GetAllControllers(c *fiber.Ctx) error {
 		return err
 	}
 
-	allControllerJson := mapControllersToJson(allController)
+	allControllerJson := mapManyControllersToJson(allController)
 
 	return c.JSON(allControllerJson)
 }
@@ -58,8 +58,9 @@ func (cnf *ApiCfg) GetAllControllerTypes(c *fiber.Ctx) error {
 		return err
 	}
 	type controllerTypesForJson struct {
-		ID   uuid.UUID `json:"id"`
-		Name string    `json:"name"`
+		ID                 uuid.UUID `json:"id"`
+		Name               string    `json:"name"`
+		IoModuleSlotAmount int       `json:"ioModuleSlotAmount"`
 	}
 
 	var result []controllerTypesForJson
@@ -68,6 +69,7 @@ func (cnf *ApiCfg) GetAllControllerTypes(c *fiber.Ctx) error {
 		result = append(result, controllerTypesForJson{
 			ID:   controllerType.ID,
 			Name: controllerType.Name.String,
+			IoModuleSlotAmount: int(controllerType.IoModuleSlotAmount.Int32),
 		})
 	}
 
@@ -280,7 +282,7 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 	}
 
 	// start transaction
-	shouldReturn, err := controllerTransaction(cnf, c, &newController, ledBoardQR)
+	shouldReturn, err := controllerTransaction(cnf, c, newController, ledBoardQR)
 	if shouldReturn {
 		log.Println("CreateController - controllerTransaction error: ", err)
 		return c.JSON(newController)
@@ -292,12 +294,10 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 		return c.JSON(newController)
 	}
 
-
-
 	return c.JSON(controllerJson)
 }
 
-func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewControllerJsonFromFrontend, ledBoardQR sql.NullString) (bool, error) {
+func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController pkg.NewControllerJsonFromFrontend, ledBoardQR sql.NullString) (bool, error) {
 	tx, err := cnf.DB.Begin()
 	if err != nil {
 		log.Println("CreateController - Transaction error: ", err)
@@ -308,7 +308,7 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 	qtx := cnf.DbQ.WithTx(tx)
 
 	// try to create display
-	newDisplayParam, err := validateNewDisplayParams(*newController)
+	newDisplayParam, err := validateNewDisplayParams(newController)
 	if err != nil {
 		log.Println("CreateController - validateNewDisplayParams error: ", err)
 		c.Response().SetStatusCode(400)
@@ -323,7 +323,7 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 	newController.DisplayId = newDisplay.ID
 
 	// try to create miniPcie
-	newMiniPcieParam, err := validateNewMiniPcieParams(*newController)
+	newMiniPcieParam, err := validateNewMiniPcieParams(newController)
 	if err != nil {
 		log.Println("CreateController - validateNewMiniPcieParams error: ", err)
 		c.Response().SetStatusCode(400)
@@ -338,7 +338,7 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 	newController.MiniPcieID = newMiniPcie.ID
 
 	// try to create controller
-	controllerParam, err := validateNewControllerParams(*newController)
+	controllerParam, err := validateNewControllerParams(newController)
 	if err != nil {
 		log.Println("CreateController - validateNewControllerParams error: ", err)
 		c.Response().SetStatusCode(400)
@@ -368,7 +368,7 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 	newController.LedBoardID = newLedBoard.ID
 
 	// try to create encloser
-	newEncloserParam, err := validateNewEncloserParams(*newController)
+	newEncloserParam, err := validateNewEncloserParams(newController)
 	if err != nil {
 		log.Println("CreateController - validateNewEncloserParams error: ", err)
 		c.Response().SetStatusCode(400)
@@ -382,11 +382,71 @@ func controllerTransaction(cnf *ApiCfg, c *fiber.Ctx, newController *pkg.NewCont
 	}
 	newController.EncloserID = newEncloser.ID
 
+	if newController.IoModules != nil {
+		// create ioModules and add to controller
+		for _, ioModule := range newController.IoModules {
+
+			// try to create ioModuleHWVersion if not exist
+			if ioModule.IoModuleHwVersionsID.String() == "00000000-0000-0000-0000-000000000000" {
+				// check if IoModuleHwVersion is nil and use it to create a new IoModuleHWVersion
+				if ioModule.IoModuleHwVersion == nil {
+					log.Println("CreateController - IoModuleHwVersion IoModuleHwVersionsID is nil")
+					c.Response().SetStatusCode(400)
+					return true, c.SendString("IoModuleHwVersion and IoModuleHwVersionsID is nil")
+				}
+				HwVersionInt := *ioModule.IoModuleHwVersion
+
+				newNwVersionID, err := qtx.CreateIoModuleHWVersion(c.Context(), HwVersionInt)
+				if err != nil {
+					log.Println("CreateController - CreateIoModuleHWVersion error: ", err)
+					c.Response().SetStatusCode(400)
+					return true, c.SendString("CreateIoModuleHWVersion error")
+				}
+				ioModule.IoModuleHwVersionsID = newNwVersionID.ID
+			}
+
+
+			ioModuleParam, err := validateNewIoModuleParams(ioModule)
+			if err != nil {
+				log.Println("CreateController - validateNewIoModuleParams error: ", err)
+				c.Response().SetStatusCode(400)
+				return true, c.SendString("IoModule parse error")
+			}
+
+			
+			newIoModuleID, err := qtx.CreateIoModule(c.Context(), ioModuleParam)
+			if err != nil {
+				log.Println("CreateController - CreateIoModule error: ", err)
+				c.Response().SetStatusCode(400)
+				return true, c.SendString("CreateIoModule error")
+			}
+			ioModule.Id = newIoModuleID.ID
+
+			// try to add ioModuleToControllerSlot
+			ioModuleToSlotParam, err := validateNewIoModuleToSlotParams(ioModule, newController.Id)
+			ioModuleInSlot, err := qtx.CreateJoinControllerSlotToIoModule(c.Context(), ioModuleToSlotParam)
+			if err != nil {
+				log.Println("CreateController - CreateJoinControllerSlotToIoModule error: ", err)
+				c.Response().SetStatusCode(400)
+				return true, c.SendString("CreateJoinControllerSlotToIoModule error")
+			}
+			ioModule.SlotID = ioModuleInSlot.ID
+		}
+	}
+
 	commitErr := tx.Commit()
 	if commitErr != nil {
 		log.Println("CreateController - Commit error: ", commitErr)
 	}
 	return false, nil
+}
+
+func validateNewIoModuleToSlotParams(ioModule pkg.NewIoModule, controllerID uuid.UUID) (database.CreateJoinControllerSlotToIoModuleParams, error) {
+	var param database.CreateJoinControllerSlotToIoModuleParams
+	err := param.ControllersID.Scan(controllerID.String())
+	err = param.IoModulesID.Scan(ioModule.Id.String())
+	err = param.SlotNumber.Scan(ioModule.SlotNumber)
+	return param, err
 }
 
 func controllerByID(cnf *ApiCfg, c *fiber.Ctx, uuid uuid.UUID) (pkg.DBControllerJsonToFrontend, bool, error) {
@@ -447,7 +507,7 @@ func mapOneControllerToJson(controllerById database.GetControllerByIdRow) pkg.DB
 	return controllerJson
 }
 
-func mapControllersToJson(allController []database.GetAllControllersRow) []pkg.DBControllerJsonToFrontend {
+func mapManyControllersToJson(allController []database.GetAllControllersRow) []pkg.DBControllerJsonToFrontend {
 	var controllersJson []pkg.DBControllerJsonToFrontend
 
 	for _, controller := range allController {
@@ -496,11 +556,11 @@ func mapControllersToJson(allController []database.GetAllControllersRow) []pkg.D
 func validateCanTerminationConfParam(newController pkg.NewControllerJsonFromFrontend) (database.GetTerminationConfigIdByCanTerminatedParams, error) {
 	//TODO: add validation
 	var canParam database.GetTerminationConfigIdByCanTerminatedParams
-	canErr := canParam.Can1Terminated.Scan(newController.Can1Terminated)
-	canErr = canParam.Can2Terminated.Scan(newController.Can2Terminated)
-	canErr = canParam.Can3Terminated.Scan(newController.Can3Terminated)
-	canErr = canParam.Can4Terminated.Scan(newController.Can4Terminated)
-	return canParam, canErr
+	canParam.Can1Terminated = newController.Can1Terminated
+	canParam.Can2Terminated = newController.Can2Terminated
+	canParam.Can3Terminated = newController.Can3Terminated
+	canParam.Can4Terminated = newController.Can4Terminated
+	return canParam, nil
 }
 
 func validateNewMiniPcieParams(newController pkg.NewControllerJsonFromFrontend) (database.CreateMiniPCIeModuleParams, error) {
@@ -511,26 +571,37 @@ func validateNewMiniPcieParams(newController pkg.NewControllerJsonFromFrontend) 
 	return newMiniPcieParams, newMiniPcieErr
 }
 
+func validateNewIoModuleParams(ioModule pkg.NewIoModule) (database.CreateIoModuleParams, error) {
+	var ioModuleParam database.CreateIoModuleParams
+	err := ioModuleParam.IoModuleTypesID.Scan(ioModule.IoModuleTypeID.String())
+	ioModuleParam.ManufacturerTopQrCode  =  ioModule.ManufacturerTopQrCode
+	ioModuleParam.ManufacturerBottomQrCode = ioModule.ManufacturerBottomQrCode
+	err = ioModuleParam.IoModuleHwVersionsID.Scan(ioModule.IoModuleHwVersionsID.String())
+	err = ioModuleParam.OrderID.Scan(ioModule.OrderID.String())
+	err = ioModuleParam.RmaNumber.Scan(ioModule.RMANumber)
+	return ioModuleParam, err
+}
+
 func validateNewControllerParams(newController pkg.NewControllerJsonFromFrontend) (database.CreateControllerParams, error) {
 	//TODO: add validation
 	var newControllerParams database.CreateControllerParams
-	newControllerErr := newControllerParams.ControllerTypesID.Scan(newController.TypesID.String())	
+	newControllerErr := newControllerParams.ControllerTypesID.Scan(newController.TypesID.String())
 	newControllerErr = newControllerParams.ProjectsID.Scan(newController.ProjectsID.String())
-	newControllerErr = newControllerParams.Description.Scan(*newController.Description)
+	newControllerErr = newControllerParams.Description.Scan(newController.Description)
 	newControllerErr = newControllerParams.ControllersPcbHwVersionsID.Scan(newController.PcbHwVersionsID.String())
 	newControllerErr = newControllerParams.SerialNumber.Scan(newController.SerialNumber)
 	newControllerErr = newControllerParams.ManufacturersID.Scan(newController.ManufacturersID.String())
 	newControllerErr = newControllerParams.MacAddress.Scan(newController.MacAddress)
-	newControllerErr = newControllerParams.SimNumber.Scan(*newController.SimNumber)
+	newControllerErr = newControllerParams.SimNumber.Scan(newController.SimNumber)
 	newControllerErr = newControllerParams.MiniPcieModulesID.Scan(newController.MiniPcieID.String()) // pkg.MiniPcie!
 	newControllerErr = newControllerParams.M2ModulesTypesID.Scan(newController.M2ModulesTypesID.String())
 	newControllerErr = newControllerParams.DisplayAdaptersID.Scan(newController.DisplayId.String()) // Display!
-	newControllerErr = newControllerParams.ArticleNumber.Scan(*newController.ArticleNumber)
-	newControllerErr = newControllerParams.InfoQrCode.Scan(*newController.InfoQrCode)
+	newControllerErr = newControllerParams.ArticleNumber.Scan(newController.ArticleNumber)
+	newControllerErr = newControllerParams.InfoQrCode.Scan(newController.InfoQrCode)
 	newControllerErr = newControllerParams.CanTerminationConfsID.Scan(newController.CanTerminationID.String()) // pkg.CanTermination!
 	newControllerErr = newControllerParams.Usb.Scan(newController.Usb)
 	newControllerErr = newControllerParams.Serial.Scan(newController.Serial)
-	newControllerErr = newControllerParams.ManufacturerQrCode.Scan(*newController.ManufacturerQrCode)
+	newControllerErr = newControllerParams.ManufacturerQrCode.Scan(newController.ManufacturerQrCode)
 	newControllerErr = newControllerParams.OrderID.UUID.Scan(newController.OrderID.String())
 
 	return newControllerParams, newControllerErr

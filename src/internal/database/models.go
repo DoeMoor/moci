@@ -13,10 +13,10 @@ import (
 
 type CanTerminationConf struct {
 	ID             uuid.UUID    `json:"id"`
-	Can1Terminated sql.NullBool `json:"can_1_terminated"`
-	Can3Terminated sql.NullBool `json:"can_3_terminated"`
-	Can2Terminated sql.NullBool `json:"can_2_terminated"`
-	Can4Terminated sql.NullBool `json:"can_4_terminated"`
+	Can1Terminated bool         `json:"can_1_terminated"`
+	Can3Terminated bool         `json:"can_3_terminated"`
+	Can2Terminated bool         `json:"can_2_terminated"`
+	Can4Terminated bool         `json:"can_4_terminated"`
 	CreatedAt      sql.NullTime `json:"created_at"`
 	UpdatedAt      sql.NullTime `json:"updated_at"`
 	IsDeleted      sql.NullBool `json:"is_deleted"`
@@ -163,11 +163,11 @@ type Enclosure struct {
 
 type IoModule struct {
 	ID                       uuid.UUID      `json:"id"`
-	IoModuleTypesID          uuid.NullUUID  `json:"io_module_types_id"`
-	ManufacturerTopQrCode    sql.NullString `json:"manufacturer_top_qr_code"`
-	ManufacturerBottomQrCode sql.NullString `json:"manufacturer_bottom_qr_code"`
+	IoModuleTypesID          uuid.UUID      `json:"io_module_types_id"`
+	ManufacturerTopQrCode    string         `json:"manufacturer_top_qr_code"`
+	ManufacturerBottomQrCode string         `json:"manufacturer_bottom_qr_code"`
 	RmaNumber                sql.NullString `json:"rma_number"`
-	IoModuleHwVersionsID     uuid.NullUUID  `json:"io_module_hw_versions_id"`
+	IoModuleHwVersionsID     uuid.UUID      `json:"io_module_hw_versions_id"`
 	OrderID                  uuid.NullUUID  `json:"order_id"`
 	CreatedAt                sql.NullTime   `json:"created_at"`
 	UpdatedAt                sql.NullTime   `json:"updated_at"`
@@ -175,11 +175,11 @@ type IoModule struct {
 }
 
 type IoModuleHwVersion struct {
-	ID        uuid.UUID     `json:"id"`
-	HwVersion sql.NullInt32 `json:"hw_version"`
-	CreatedAt sql.NullTime  `json:"created_at"`
-	UpdatedAt sql.NullTime  `json:"updated_at"`
-	IsDeleted sql.NullBool  `json:"is_deleted"`
+	ID        uuid.UUID    `json:"id"`
+	HwVersion string       `json:"hw_version"`
+	CreatedAt sql.NullTime `json:"created_at"`
+	UpdatedAt sql.NullTime `json:"updated_at"`
+	IsDeleted sql.NullBool `json:"is_deleted"`
 }
 
 type IoModuleNote struct {
@@ -193,7 +193,7 @@ type IoModuleNote struct {
 
 type IoModuleType struct {
 	ID               uuid.UUID             `json:"id"`
-	ModuleTypeName   sql.NullString        `json:"module_type_name"`
+	ModuleTypeName   string                `json:"module_type_name"`
 	ModuleTypeNumber sql.NullInt32         `json:"module_type_number"`
 	PinoutJson       pqtype.NullRawMessage `json:"pinout_json"`
 	CreatedAt        sql.NullTime          `json:"created_at"`
@@ -229,7 +229,7 @@ type Manufacturer struct {
 
 type MiniPcieModule struct {
 	ID                    uuid.UUID      `json:"id"`
-	MiniPcieModulesTypeID uuid.NullUUID  `json:"mini_pcie_modules_type_id"`
+	MiniPcieModulesTypeID uuid.UUID      `json:"mini_pcie_modules_type_id"`
 	SerialNumber          sql.NullString `json:"serial_number"`
 	CreatedAt             sql.NullTime   `json:"created_at"`
 	UpdatedAt             sql.NullTime   `json:"updated_at"`
@@ -247,7 +247,7 @@ type MiniPcieModulesType struct {
 
 type Order struct {
 	ID            uuid.UUID      `json:"id"`
-	CustomersID   uuid.NullUUID  `json:"customers_id"`
+	CustomersID   uuid.UUID      `json:"customers_id"`
 	Notes         sql.NullString `json:"notes"`
 	DeliveryDate  sql.NullTime   `json:"delivery_date"`
 	InvoiceNumber sql.NullString `json:"invoice_number"`

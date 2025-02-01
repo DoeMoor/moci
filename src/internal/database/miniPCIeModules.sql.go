@@ -19,7 +19,7 @@ RETURNING id, mini_pcie_modules_type_id, serial_number, created_at, updated_at, 
 `
 
 type CreateMiniPCIeModuleParams struct {
-	MiniPcieModulesTypeID uuid.NullUUID  `json:"mini_pcie_modules_type_id"`
+	MiniPcieModulesTypeID uuid.UUID      `json:"mini_pcie_modules_type_id"`
 	SerialNumber          sql.NullString `json:"serial_number"`
 }
 
@@ -47,7 +47,7 @@ FROM mini_pcie_modules m
 type GetAllMiniPCIeModulesRow struct {
 	Name                  sql.NullString `json:"name"`
 	ID                    uuid.UUID      `json:"id"`
-	MiniPcieModulesTypeID uuid.NullUUID  `json:"mini_pcie_modules_type_id"`
+	MiniPcieModulesTypeID uuid.UUID      `json:"mini_pcie_modules_type_id"`
 	SerialNumber          sql.NullString `json:"serial_number"`
 	CreatedAt             sql.NullTime   `json:"created_at"`
 	UpdatedAt             sql.NullTime   `json:"updated_at"`
@@ -130,7 +130,7 @@ WHERE m.id = $1
 type GetMiniPCIeModuleByIdRow struct {
 	Name                  sql.NullString `json:"name"`
 	ID                    uuid.UUID      `json:"id"`
-	MiniPcieModulesTypeID uuid.NullUUID  `json:"mini_pcie_modules_type_id"`
+	MiniPcieModulesTypeID uuid.UUID      `json:"mini_pcie_modules_type_id"`
 	SerialNumber          sql.NullString `json:"serial_number"`
 	CreatedAt             sql.NullTime   `json:"created_at"`
 	UpdatedAt             sql.NullTime   `json:"updated_at"`
@@ -160,7 +160,7 @@ where serial_number = $1
 
 type GetMiniPCIeModuleBySNRow struct {
 	ID                    uuid.UUID      `json:"id"`
-	MiniPcieModulesTypeID uuid.NullUUID  `json:"mini_pcie_modules_type_id"`
+	MiniPcieModulesTypeID uuid.UUID      `json:"mini_pcie_modules_type_id"`
 	SerialNumber          sql.NullString `json:"serial_number"`
 }
 

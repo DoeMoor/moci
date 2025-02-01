@@ -1,38 +1,35 @@
 -- name: GetAllControllers :many
 SELECT c.id,
-       ct.name                       AS controller_type_name,
-       ct.io_module_slot_amount      AS io_module_socket_amount,
-       p.name                        AS project_name,
+       ct.name                                      AS type_name,
+       ct.io_module_slot_amount                     AS io_module_socket_amount,
+       p.name                                       AS project_name,
        c.description,
-       concat(
-               pcbv.version_number,
-               pcbrev.revision
-       )                             AS pcb_hw_version,
+       concat(pcbv.version_number, pcbrev.revision) AS pcb_hw_version,
        c.pcb_version_number,
-       c.serial_number               as controller_serial_number,
-       m.name                        AS manufacturer_name,
+       c.serial_number                              as serial_number,
+       m.name                                       AS manufacturer_name,
        c.assembly_date,
        c.mac_address,
        c.sim_number,
-       enc.serial_number             as enclosure_serial_number,
-       encman.name                   as enclosure_manufacturer,
-       mpt.name                      AS mini_pcie_modules_name,
-       mpt.module_type_number        as mini_pcie_module_type_number,
-       mpcie.serial_number           AS mini_pcie_serial_number,
-       m2t.name                      AS m2_module_name,
-       m2t.module_type_number        AS m2_module_type_number,
-       ldb.manufacturer_qr_code      as LED_board,
-       da.display_adapters_type_name as display_type,
-       da.manufacturer_qr_code       as display_manufacturer_qr_code,
+       enc.serial_number                            as enclosure_serial_number,
+       encman.name                                  as enclosure_manufacturer,
+       mpt.name                                     AS mini_pcie_modules_name,
+       mpt.module_type_number                       as mini_pcie_module_type_number,
+       mpcie.serial_number                          AS mini_pcie_serial_number,
+       m2t.name                                     AS m2_module_name,
+       m2t.module_type_number                       AS m2_module_type_number,
+       ldb.manufacturer_qr_code                     as led_board_qr_code,
+       da.display_adapters_type_name                as display_type,
+       da.manufacturer_qr_code                      as display_manufacturer_qr_code,
        c.article_number,
-       c.info_qr_code                     as controller_info_qr_code,
+       c.info_qr_code                               as info_qr_code,
        ctc.can_1_terminated,
        ctc.can_2_terminated,
        ctc.can_3_terminated,
        ctc.can_4_terminated,
        c.usb,
        c.serial,
-       c.manufacturer_qr_code        as controller_manufacturer_qr_code,
+       c.manufacturer_qr_code                       as manufacturer_qr_code,
        c.order_id,
        c.created_at,
        c.updated_at,
@@ -55,39 +52,36 @@ FROM controllers c
 
 -- name: GetControllerById :one
 SELECT c.id,
-       ct.name                       AS controller_type_name,
-       ct.io_module_slot_amount      AS io_module_socket_amount,
-       p.name                        AS project_name,
+       ct.name                                      AS type_name,
+       ct.io_module_slot_amount                     AS io_module_socket_amount,
+       p.name                                       AS project_name,
        c.description,
-       concat(
-               pcbv.version_number,
-               pcbrev.revision
-       )                             AS pcb_hw_version,
+       concat(pcbv.version_number, pcbrev.revision) AS pcb_hw_version,
        c.pcb_version_number,
-       c.serial_number               as controller_serial_number,
-       m.name                        AS manufacturer_name,
+       c.serial_number                              as serial_number,
+       m.name                                       AS manufacturer_name,
        c.assembly_date,
        c.mac_address,
        c.sim_number,
-       enc.serial_number             as enclosure_serial_number,
-       encman.name                   as enclosure_manufacturer,
-       mpt.name                      AS mini_pcie_modules_name,
-       mpt.module_type_number        as mini_pcie_module_type_number,
-       mpcie.serial_number           AS mini_pcie_serial_number,
-       m2t.name                      AS m2_module_name,
-       m2t.module_type_number        AS m2_module_type_number,
-       ldb.manufacturer_qr_code      as LED_board,
-       da.display_adapters_type_name as display_type,
-       da.manufacturer_qr_code       as display_manufacturer_qr_code,
+       enc.serial_number                            as enclosure_serial_number,
+       encman.name                                  as enclosure_manufacturer,
+       mpt.name                                     AS mini_pcie_modules_name,
+       mpt.module_type_number                       as mini_pcie_module_type_number,
+       mpcie.serial_number                          AS mini_pcie_serial_number,
+       m2t.name                                     AS m2_module_name,
+       m2t.module_type_number                       AS m2_module_type_number,
+       ldb.manufacturer_qr_code                     as led_board_qr_code,
+       da.display_adapters_type_name                as display_type,
+       da.manufacturer_qr_code                      as display_manufacturer_qr_code,
        c.article_number,
-       c.info_qr_code                     as controller_info_qr_code,
+       c.info_qr_code                               as info_qr_code,
        ctc.can_1_terminated,
        ctc.can_2_terminated,
        ctc.can_3_terminated,
        ctc.can_4_terminated,
        c.usb,
        c.serial,
-       c.manufacturer_qr_code        as controller_manufacturer_qr_code,
+       c.manufacturer_qr_code                       as manufacturer_qr_code,
        c.order_id,
        c.created_at,
        c.updated_at,
@@ -110,11 +104,15 @@ FROM controllers c
 WHERE c.id = $1;
 
 -- name: GetALLControllerTypes :many
-SELECT id, controller_types.name
+SELECT id,
+       controller_types.name,
+       controller_types.io_module_slot_amount
 FROM controller_types;
 
 -- name: GetAllControllersPcbHwVersions :many
-select id, version_number, revision
+select id,
+       version_number,
+       revision
 from controller_pcb_hw_versions;
 
 -- name: GetControllerTypesPinout :one
@@ -123,25 +121,24 @@ from controller_types
 where id = $1;
 
 -- name: CreateController :one
-INSERT INTO CONTROLLERS
-(CONTROLLER_TYPES_ID,
- PROJECTS_ID,
- DESCRIPTION,
- controllers_pcb_hw_versions_id,
- SERIAL_NUMBER,
- MANUFACTURERS_ID,
- MAC_ADDRESS,
- SIM_NUMBER,
- MINI_PCIE_MODULES_ID,
- m2_modules_types_id,
- display_adapters_id,
- ARTICLE_NUMBER,
- info_QR_CODE,
- CAN_TERMINATION_CONFS_ID,
- USB,
- serial,
- manufacturer_qr_code,
- ORDER_ID)
+INSERT INTO CONTROLLERS (CONTROLLER_TYPES_ID,
+                         PROJECTS_ID,
+                         DESCRIPTION,
+                         controllers_pcb_hw_versions_id,
+                         SERIAL_NUMBER,
+                         MANUFACTURERS_ID,
+                         MAC_ADDRESS,
+                         SIM_NUMBER,
+                         MINI_PCIE_MODULES_ID,
+                         m2_modules_types_id,
+                         display_adapters_id,
+                         ARTICLE_NUMBER,
+                         info_QR_CODE,
+                         CAN_TERMINATION_CONFS_ID,
+                         USB,
+                         serial,
+                         manufacturer_qr_code,
+                         ORDER_ID)
 VALUES ($1,
         $2,
         $3,
@@ -160,4 +157,11 @@ VALUES ($1,
         $16,
         $17,
         $18)
-returning *;
+returning
+    *;
+
+-- name: CreateJoinControllerSlotToIoModule :one
+INSERT INTO controller_slot (controllers_id, io_modules_id, slot_number)
+VALUES ($1, $2, $3)
+returning
+    *;

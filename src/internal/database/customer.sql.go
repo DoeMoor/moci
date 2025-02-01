@@ -90,7 +90,7 @@ from orders ord
 type GetAllOrdersRow struct {
 	CustomerName  sql.NullString `json:"customer_name"`
 	ID            uuid.UUID      `json:"id"`
-	CustomersID   uuid.NullUUID  `json:"customers_id"`
+	CustomersID   uuid.UUID      `json:"customers_id"`
 	Notes         sql.NullString `json:"notes"`
 	DeliveryDate  sql.NullTime   `json:"delivery_date"`
 	InvoiceNumber sql.NullString `json:"invoice_number"`

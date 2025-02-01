@@ -26,11 +26,11 @@ returning
 `
 
 type CreateIoModuleParams struct {
-	IoModuleTypesID          uuid.NullUUID  `json:"io_module_types_id"`
-	ManufacturerTopQrCode    sql.NullString `json:"manufacturer_top_qr_code"`
-	ManufacturerBottomQrCode sql.NullString `json:"manufacturer_bottom_qr_code"`
+	IoModuleTypesID          uuid.UUID      `json:"io_module_types_id"`
+	ManufacturerTopQrCode    string         `json:"manufacturer_top_qr_code"`
+	ManufacturerBottomQrCode string         `json:"manufacturer_bottom_qr_code"`
 	RmaNumber                sql.NullString `json:"rma_number"`
-	IoModuleHwVersionsID     uuid.NullUUID  `json:"io_module_hw_versions_id"`
+	IoModuleHwVersionsID     uuid.UUID      `json:"io_module_hw_versions_id"`
 	OrderID                  uuid.NullUUID  `json:"order_id"`
 }
 
@@ -66,7 +66,7 @@ returning
     id, hw_version, created_at, updated_at, is_deleted
 `
 
-func (q *Queries) CreateIoModuleHWVersion(ctx context.Context, hwVersion sql.NullInt32) (IoModuleHwVersion, error) {
+func (q *Queries) CreateIoModuleHWVersion(ctx context.Context, hwVersion string) (IoModuleHwVersion, error) {
 	row := q.db.QueryRowContext(ctx, createIoModuleHWVersion, hwVersion)
 	var i IoModuleHwVersion
 	err := row.Scan(
@@ -87,7 +87,7 @@ returning
 `
 
 type CreateIoModuleTypeParams struct {
-	ModuleTypeName   sql.NullString        `json:"module_type_name"`
+	ModuleTypeName   string                `json:"module_type_name"`
 	ModuleTypeNumber sql.NullInt32         `json:"module_type_number"`
 	PinoutJson       pqtype.NullRawMessage `json:"pinout_json"`
 }
@@ -113,9 +113,9 @@ from io_module_types
 `
 
 type GetAllIoModuleTypesRow struct {
-	ID               uuid.UUID      `json:"id"`
-	ModuleTypeName   sql.NullString `json:"module_type_name"`
-	ModuleTypeNumber sql.NullInt32  `json:"module_type_number"`
+	ID               uuid.UUID     `json:"id"`
+	ModuleTypeName   string        `json:"module_type_name"`
+	ModuleTypeNumber sql.NullInt32 `json:"module_type_number"`
 }
 
 func (q *Queries) GetAllIoModuleTypes(ctx context.Context) ([]GetAllIoModuleTypesRow, error) {
@@ -167,11 +167,11 @@ type GetAllIoModulesRow struct {
 	ID                       uuid.UUID             `json:"id"`
 	ModuleTypeName           sql.NullString        `json:"module_type_name"`
 	ModuleTypeNumber         sql.NullInt32         `json:"module_type_number"`
-	ManufacturerBottomQrCode sql.NullString        `json:"manufacturer_bottom_qr_code"`
-	ManufacturerTopQrCode    sql.NullString        `json:"manufacturer_top_qr_code"`
+	ManufacturerBottomQrCode string                `json:"manufacturer_bottom_qr_code"`
+	ManufacturerTopQrCode    string                `json:"manufacturer_top_qr_code"`
 	RmaNumber                sql.NullString        `json:"rma_number"`
 	OrderID                  uuid.NullUUID         `json:"order_id"`
-	HwVersion                sql.NullInt32         `json:"hw_version"`
+	HwVersion                sql.NullString        `json:"hw_version"`
 	InvoiceNumber            sql.NullString        `json:"invoice_number"`
 	CustomerName             sql.NullString        `json:"customer name"`
 	ControllersID            uuid.NullUUID         `json:"controllers_id"`
@@ -243,11 +243,11 @@ type GetIoModuleByIdRow struct {
 	ID                       uuid.UUID             `json:"id"`
 	ModuleTypeName           sql.NullString        `json:"module_type_name"`
 	ModuleTypeNumber         sql.NullInt32         `json:"module_type_number"`
-	ManufacturerBottomQrCode sql.NullString        `json:"manufacturer_bottom_qr_code"`
-	ManufacturerTopQrCode    sql.NullString        `json:"manufacturer_top_qr_code"`
+	ManufacturerBottomQrCode string                `json:"manufacturer_bottom_qr_code"`
+	ManufacturerTopQrCode    string                `json:"manufacturer_top_qr_code"`
 	RmaNumber                sql.NullString        `json:"rma_number"`
 	OrderID                  uuid.NullUUID         `json:"order_id"`
-	HwVersion                sql.NullInt32         `json:"hw_version"`
+	HwVersion                sql.NullString        `json:"hw_version"`
 	InvoiceNumber            sql.NullString        `json:"invoice_number"`
 	CustomerName             sql.NullString        `json:"customer name"`
 	ControllersID            uuid.NullUUID         `json:"controllers_id"`
