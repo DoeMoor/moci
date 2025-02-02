@@ -1,0 +1,22 @@
+version: '3'
+
+tasks:
+  init_front:
+    dir: ./moci_front
+    cmds:
+      - git submodule update --init
+      - npm install
+
+  build_front:
+    dir: ./moci_front
+    cmds:
+      - npm run buildModule
+
+  run_app:
+    cmds:
+      - task build_front
+      - (cd ./src && go build -o ./../_build/moci && ./../_build/moci)
+
+  run_go_lint:
+    dir: ./src
+    cmds: golangci-lint run
