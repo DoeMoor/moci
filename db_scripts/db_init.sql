@@ -1,3 +1,4 @@
+-- Active: 1738612099245@@127.0.0.1@5432@moci
 CREATE TABLE "controllers" (
   "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
   "controller_types_id" uuid,

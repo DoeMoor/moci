@@ -1,22 +1,37 @@
 version: '3'
 
 tasks:
-  init_front:
+  init_app:
     dir: ./moci_front
     cmds:
       - git submodule update --init
       - npm install
+      - (cd ./.. && cp ./envTemplate.env ./src/.env)
+      - echo "go to ./src/.env end fill the connect data" 
 
   build_front:
     dir: ./moci_front
     cmds:
       - npm run buildModule
 
-  run_app:
+  clean_run_app:
     cmds:
-      - task build_front
+      - (rm -rf ./_build/*)
+      - (cd ./moci_front && npm run buildModule)
+      - (cp ./src/.env ./_build/)
+      - (cp ./src/web/ -r ./_build/web/)
       - (cd ./src && go build -o ./../_build/moci && ./../_build/moci)
 
   run_go_lint:
     dir: ./src
-    cmds: golangci-lint run
+    cmds: 
+      - golangci-lint run
+
+  init_db:
+    cmds:
+      - '(podman run -d   --name my_postgres /
+      -e POSTGRES_PASSWORD=postgres /
+      -e POSTGRES_DB=moci -v /
+      /home/doe/Downloads/moci/moci_backend/dev_db:/var/lib/postgresql/data  /
+      -p 5432:5432  /
+       postgres)'
