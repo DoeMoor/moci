@@ -7,13 +7,50 @@
 - **Goose (Database Migration Tool)** - [🛠️ GitHub](https://github.com/pressly/goose)
 - **Webi (install and update Go version)** - [📚 Documentation](https://webinstall.dev/golang/)
 - **Golangci-lint (Go linter)** - [📚 Documentation](https://golangci-lint.run/)
-- **Task (Task runner)** - [📚 Documentation](https://taskfile.dev/usage/)
 
-#### Framework 
+### Framework 
 - **Fiber (Go HTTP framework)** - [🌐 Documentation](https://docs.gofiber.io/)
 
 ### 🌟 Frontend
 - **Vue.js** with **Vuetify** component framework
+
+### Dev Tools
+- **Task (Task runner)** - [📚 Documentation](https://taskfile.dev/usage/)
+- **Podman** - [📚 Documentation](https://podman.io/) 
+
+---
+
+## 📋 Tasks
+
+### init_app
+- **Directory**: `./moci_front`
+- **Purpose**: Initializes the frontend application
+- **Commands**:
+  - Updates and initializes git submodules
+  - Installs npm dependencies
+
+### build_front
+- **Directory**: `./moci_front`
+- **Purpose**: Builds the frontend module
+- **Command**: Runs the `buildModule` npm script
+
+### clean_run_app
+- **Purpose**: Cleans, rebuilds, and runs the entire application
+- **Steps**:
+  1. Clears the `_build` directory
+  2. Builds the frontend module
+  3. Copies the `.env` file to the build directory
+  4. Copies the `web` directory to the build directory
+  5. Builds the Go application and runs it
+
+### run_go_lint
+- **Directory**: `./src`
+- **Purpose**: Runs the Go linter
+- **Command**: Executes `golangci-lint run`
+
+### init_db
+- **Purpose**: Initializes a PostgreSQL database using Podman
+- **Command**: Runs a Podman container with PostgreSQL, setting up the database for the application
 
 ---
 
@@ -70,6 +107,12 @@ The following SQL scripts are available:
 - **db_init.sql** - Creates and initializes the database schema
 - **insert_scratch.sql** - Populates the database with test data
 - **select_scratch.sql** - Contains examples of SELECT queries
+
+Initializes a PostgreSQL database using Podman for **DEV** environment
+- **DO NOT USE FOR PRODUCTION! Or change the password for db**.
+```bash
+task init_db
+```
 
 ---
 
