@@ -3,3 +3,4 @@ _build
 .env
 db_scripts/.idea
 web
+dev_db
