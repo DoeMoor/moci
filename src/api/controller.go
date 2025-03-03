@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 
 	// "fmt"
 	"log"
@@ -160,6 +161,8 @@ func (cnf *ApiCfg) CreateController(c *fiber.Ctx) error {
 		c.Response().SetStatusCode(400)
 		return c.SendString("json parse error")
 	}
+
+
 
 	//begin assembly of new controller object
 
@@ -631,4 +634,14 @@ func validateNewEncloserParams(newController pkg.NewControllerJsonFromFrontend) 
 	newEncloserErr = newEncloserParams.ControllerTypesID.Scan(newController.TypesID.String())
 	newEncloserErr = newEncloserParams.ManufacturersID.Scan(newController.EncloserManufacturerID.String())
 	return newEncloserParams, newEncloserErr
+}
+
+func validateFrontendNewController(newController pkg.NewControllerJsonFromFrontend) error {
+
+	if newController.TypesID.String() == "" || newController.TypesID.String() == "00000000-0000-0000-0000-000000000000" {
+		return errors.New("TypesID can't be empty!!")
+	}
+	if newController.ProjectsID.String() == "" || newController.ProjectsID.String() == "00000000-0000-0000-0000-000000000000" {
+	}
+	return nil
 }
